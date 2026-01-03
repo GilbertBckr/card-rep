@@ -1,41 +1,24 @@
-# Prerequisites
-*.d
+# Maven
+target/
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
 
-# Precompiled Headers
-*.gch
-*.pch
+# OS
+.DS_Store
+Thumbs.db
 
-# Linker files
-*.ilk
+# Build artifacts
+*.class
 
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-# debug information files
-*.dwo
+# JaCoCo
+jacoco.exec
