@@ -13,6 +13,7 @@ import java.util.Scanner;
 
 /**
  * CLI menu for managing cards (create, modify, delete).
+ * Uses MenuHelper for shared selection logic (DRY refactoring).
  */
 public class CardMenu {
 
@@ -21,15 +22,17 @@ public class CardMenu {
     private final ModifyCardUseCase modifyCardUseCase;
     private final DeleteCardUseCase deleteCardUseCase;
     private final DeckRepository deckRepository;
+    private final MenuHelper menuHelper;
 
     public CardMenu(Scanner scanner, CreateCardUseCase createCardUseCase,
                     ModifyCardUseCase modifyCardUseCase, DeleteCardUseCase deleteCardUseCase,
-                    DeckRepository deckRepository) {
+                    DeckRepository deckRepository, MenuHelper menuHelper) {
         this.scanner = scanner;
         this.createCardUseCase = createCardUseCase;
         this.modifyCardUseCase = modifyCardUseCase;
         this.deleteCardUseCase = deleteCardUseCase;
         this.deckRepository = deckRepository;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
@@ -57,7 +60,7 @@ public class CardMenu {
     }
 
     private void createCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         System.out.print("Enter front text: ");
@@ -85,7 +88,7 @@ public class CardMenu {
     }
 
     private void modifyCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         String cardId = selectCard(deckId);
@@ -116,7 +119,7 @@ public class CardMenu {
     }
 
     private void deleteCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         String cardId = selectCard(deckId);
@@ -131,7 +134,7 @@ public class CardMenu {
     }
 
     private void listCards() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         Deck deck = deckRepository.findById(deckId).orElse(null);
@@ -155,32 +158,6 @@ public class CardMenu {
         }
     }
 
-    private String selectDeck() {
-        List<Deck> decks = deckRepository.findAll();
-        if (decks.isEmpty()) {
-            System.out.println("No decks available. Create a deck first.");
-            return null;
-        }
-
-        System.out.println("\nAvailable decks:");
-        for (int i = 0; i < decks.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
-        }
-        System.out.print("Select deck (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= decks.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return decks.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
-    }
-
     private String selectCard(String deckId) {
         Deck deck = deckRepository.findById(deckId).orElse(null);
         if (deck == null || deck.getCards().isEmpty()) {
@@ -189,22 +166,8 @@ public class CardMenu {
         }
 
         List<Card> cards = deck.getCards();
-        System.out.println("\nCards:");
-        for (int i = 0; i < cards.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + cards.get(i).getFront());
-        }
-        System.out.print("Select card (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= cards.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return cards.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
+        return menuHelper.selectFromList(cards, "Cards",
+                card -> card.getFront().getText(),
+                Card::getId);
     }
 }

@@ -6,11 +6,11 @@ import com.cardrep.application.collection.ModifyCollectionUseCase;
 import com.cardrep.domain.model.Collection;
 import com.cardrep.domain.repository.CollectionRepository;
 
-import java.util.List;
 import java.util.Scanner;
 
 /**
  * CLI menu for managing collections (create, modify, delete).
+ * Uses MenuHelper for shared selection logic (DRY refactoring).
  */
 public class CollectionMenu {
 
@@ -19,16 +19,19 @@ public class CollectionMenu {
     private final ModifyCollectionUseCase modifyCollectionUseCase;
     private final DeleteCollectionUseCase deleteCollectionUseCase;
     private final CollectionRepository collectionRepository;
+    private final MenuHelper menuHelper;
 
     public CollectionMenu(Scanner scanner, CreateCollectionUseCase createCollectionUseCase,
                           ModifyCollectionUseCase modifyCollectionUseCase,
                           DeleteCollectionUseCase deleteCollectionUseCase,
-                          CollectionRepository collectionRepository) {
+                          CollectionRepository collectionRepository,
+                          MenuHelper menuHelper) {
         this.scanner = scanner;
         this.createCollectionUseCase = createCollectionUseCase;
         this.modifyCollectionUseCase = modifyCollectionUseCase;
         this.deleteCollectionUseCase = deleteCollectionUseCase;
         this.collectionRepository = collectionRepository;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
@@ -54,7 +57,7 @@ public class CollectionMenu {
     }
 
     private void createCollection() {
-        String parentId = selectCollection();
+        String parentId = menuHelper.selectCollection();
         if (parentId == null) return;
 
         System.out.print("Enter collection name: ");
@@ -74,7 +77,7 @@ public class CollectionMenu {
     }
 
     private void modifyCollection() {
-        String collectionId = selectNonRootCollection();
+        String collectionId = menuHelper.selectNonRootCollection();
         if (collectionId == null) return;
 
         System.out.print("Enter new name: ");
@@ -94,13 +97,12 @@ public class CollectionMenu {
 
     private void deleteCollection() {
         Collection root = collectionRepository.getRootCollection();
-        List<Collection> children = root.getChildCollections();
-        if (children.isEmpty()) {
+        if (root.getChildCollections().isEmpty()) {
             System.out.println("No collections to delete (root cannot be deleted).");
             return;
         }
 
-        String collectionId = selectNonRootCollection();
+        String collectionId = menuHelper.selectNonRootCollection();
         if (collectionId == null) return;
 
         System.out.print("Are you sure? This will delete all content. (y/n): ");
@@ -115,58 +117,6 @@ public class CollectionMenu {
             System.out.println("Collection deleted successfully.");
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private String selectCollection() {
-        Collection root = collectionRepository.getRootCollection();
-        System.out.println("\nCollections:");
-        System.out.println("  1. " + root.getName() + " (Root)");
-
-        List<Collection> children = root.getChildCollections();
-        for (int i = 0; i < children.size(); i++) {
-            System.out.println("  " + (i + 2) + ". " + children.get(i).getName());
-        }
-        System.out.print("Select collection (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index == 0) return root.getId();
-            if (index > 0 && index <= children.size()) {
-                return children.get(index - 1).getId();
-            }
-            System.out.println("Invalid selection.");
-            return null;
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
-    }
-
-    private String selectNonRootCollection() {
-        Collection root = collectionRepository.getRootCollection();
-        List<Collection> children = root.getChildCollections();
-        if (children.isEmpty()) {
-            System.out.println("No non-root collections available.");
-            return null;
-        }
-
-        System.out.println("\nCollections (excluding root):");
-        for (int i = 0; i < children.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + children.get(i).getName());
-        }
-        System.out.print("Select collection (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= children.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return children.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
         }
     }
 }

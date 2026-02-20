@@ -61,13 +61,17 @@ public class CardRepApp {
 
         Scanner scanner = new Scanner(System.in);
 
+        // Shared menu helper (DRY: eliminates duplicated selection logic)
+        MenuHelper menuHelper = new MenuHelper(scanner, deckRepository, collectionRepository);
+
         // Build menus
-        CardMenu cardMenu = new CardMenu(scanner, createCard, modifyCard, deleteCard, deckRepository);
+        CardMenu cardMenu = new CardMenu(scanner, createCard, modifyCard, deleteCard,
+                deckRepository, menuHelper);
         DeckMenu deckMenu = new DeckMenu(scanner, createDeck, modifyDeck, deleteDeck,
-                collectionRepository, randomAlgorithm, spacedAlgorithm, statsLogger);
+                collectionRepository, randomAlgorithm, spacedAlgorithm, statsLogger, menuHelper);
         CollectionMenu collectionMenu = new CollectionMenu(scanner, createCollection,
-                modifyCollection, deleteCollection, collectionRepository);
-        LearningSession learningSession = new LearningSession(scanner, nextCard, learnCard, deckRepository);
+                modifyCollection, deleteCollection, collectionRepository, menuHelper);
+        LearningSession learningSession = new LearningSession(scanner, nextCard, learnCard, menuHelper);
 
         MainMenu mainMenu = new MainMenu(scanner, cardMenu, deckMenu, collectionMenu,
                 learningSession, collectionRepository);
