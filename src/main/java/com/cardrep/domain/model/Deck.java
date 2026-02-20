@@ -110,27 +110,39 @@ public class Deck {
 
     /**
      * Compute aggregate deck stats from the current cards.
+     * Refactored: extracted helper methods for clarity (Extract Method refactoring).
      */
     public DeckStats computeStats() {
         int total = cards.size();
-        int reviewed = 0;
-        int easy = 0;
-        int medium = 0;
-        int hard = 0;
-        int failed = 0;
+        List<Card> reviewedCards = getReviewedCards();
+        int reviewed = reviewedCards.size();
 
-        for (Card card : cards) {
-            if (card.getStats().hasBeenReviewed()) {
-                reviewed++;
-                Difficulty lastDifficulty = card.getStats().getLastDifficulty();
-                if (lastDifficulty == Difficulty.EASY) easy++;
-                else if (lastDifficulty == Difficulty.MEDIUM) medium++;
-                else if (lastDifficulty == Difficulty.HARD) hard++;
-                else if (lastDifficulty == Difficulty.AGAIN) failed++;
-            }
-        }
+        return new DeckStats(
+                total,
+                reviewed,
+                countByLastDifficulty(reviewedCards, Difficulty.EASY),
+                countByLastDifficulty(reviewedCards, Difficulty.MEDIUM),
+                countByLastDifficulty(reviewedCards, Difficulty.HARD),
+                countByLastDifficulty(reviewedCards, Difficulty.AGAIN)
+        );
+    }
 
-        return new DeckStats(total, reviewed, easy, medium, hard, failed);
+    /**
+     * Returns all cards that have been reviewed at least once.
+     */
+    private List<Card> getReviewedCards() {
+        return cards.stream()
+                .filter(card -> card.getStats().hasBeenReviewed())
+                .toList();
+    }
+
+    /**
+     * Counts how many of the given cards have the specified last difficulty.
+     */
+    private int countByLastDifficulty(List<Card> reviewedCards, Difficulty difficulty) {
+        return (int) reviewedCards.stream()
+                .filter(card -> card.getStats().getLastDifficulty() == difficulty)
+                .count();
     }
 
     // Observer pattern support

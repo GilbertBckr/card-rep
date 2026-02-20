@@ -12,14 +12,16 @@ import com.cardrep.domain.service.RepetitionAlgorithm;
 import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
 import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
 
-import java.util.List;
 import java.util.Scanner;
 
 /**
  * CLI menu for managing decks (create, modify, delete, view stats).
+ * Uses MenuHelper for shared selection logic (DRY refactoring).
  *
- * NOTE: This class intentionally has some code duplication with CardMenu
- * (e.g., selectFromList patterns) for later DRY refactoring demonstration.
+ * NOTE: This class intentionally depends on concrete algorithm types
+ * (RandomRepetitionAlgorithm, SpacedRepetitionAlgorithm) instead of
+ * the RepetitionAlgorithm interface. This is a deliberate violation
+ * of the Dependency Inversion Principle for analysis in the README.
  */
 public class DeckMenu {
 
@@ -31,13 +33,15 @@ public class DeckMenu {
     private final RandomRepetitionAlgorithm randomAlgorithm;
     private final SpacedRepetitionAlgorithm spacedAlgorithm;
     private final DeckStatsObserver statsObserver;
+    private final MenuHelper menuHelper;
 
     public DeckMenu(Scanner scanner, CreateDeckUseCase createDeckUseCase,
                     ModifyDeckUseCase modifyDeckUseCase, DeleteDeckUseCase deleteDeckUseCase,
                     CollectionRepository collectionRepository,
                     RandomRepetitionAlgorithm randomAlgorithm,
                     SpacedRepetitionAlgorithm spacedAlgorithm,
-                    DeckStatsObserver statsObserver) {
+                    DeckStatsObserver statsObserver,
+                    MenuHelper menuHelper) {
         this.scanner = scanner;
         this.createDeckUseCase = createDeckUseCase;
         this.modifyDeckUseCase = modifyDeckUseCase;
@@ -46,6 +50,7 @@ public class DeckMenu {
         this.randomAlgorithm = randomAlgorithm;
         this.spacedAlgorithm = spacedAlgorithm;
         this.statsObserver = statsObserver;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
@@ -73,7 +78,7 @@ public class DeckMenu {
     }
 
     private void createDeck() {
-        String collectionId = selectCollection();
+        String collectionId = menuHelper.selectCollection();
         if (collectionId == null) return;
 
         System.out.print("Enter deck name: ");
@@ -96,13 +101,13 @@ public class DeckMenu {
     }
 
     private void modifyDeck() {
-        String collectionId = selectCollection();
+        String collectionId = menuHelper.selectCollection();
         if (collectionId == null) return;
 
         Collection collection = collectionRepository.findById(collectionId).orElse(null);
         if (collection == null) return;
 
-        String deckId = selectDeckFromCollection(collection);
+        String deckId = menuHelper.selectDeckFromCollection(collection);
         if (deckId == null) return;
 
         System.out.print("Enter new name (or press Enter to keep current): ");
@@ -124,13 +129,13 @@ public class DeckMenu {
     }
 
     private void deleteDeck() {
-        String collectionId = selectCollection();
+        String collectionId = menuHelper.selectCollection();
         if (collectionId == null) return;
 
         Collection collection = collectionRepository.findById(collectionId).orElse(null);
         if (collection == null) return;
 
-        String deckId = selectDeckFromCollection(collection);
+        String deckId = menuHelper.selectDeckFromCollection(collection);
         if (deckId == null) return;
 
         try {
@@ -142,13 +147,13 @@ public class DeckMenu {
     }
 
     private void viewDeckStats() {
-        String collectionId = selectCollection();
+        String collectionId = menuHelper.selectCollection();
         if (collectionId == null) return;
 
         Collection collection = collectionRepository.findById(collectionId).orElse(null);
         if (collection == null) return;
 
-        String deckId = selectDeckFromCollection(collection);
+        String deckId = menuHelper.selectDeckFromCollection(collection);
         if (deckId == null) return;
 
         Deck deck = collection.findDeck(deckId);
@@ -167,57 +172,6 @@ public class DeckMenu {
         System.out.println("Hard:           " + stats.getCardsHard());
         System.out.println("Failed (Again): " + stats.getCardsFailed());
         System.out.println("Algorithm:      " + deck.getRepetitionAlgorithm().getName());
-    }
-
-    private String selectCollection() {
-        Collection root = collectionRepository.getRootCollection();
-        System.out.println("\nCollections:");
-        System.out.println("  1. " + root.getName() + " (Root)");
-
-        List<Collection> children = root.getChildCollections();
-        for (int i = 0; i < children.size(); i++) {
-            System.out.println("  " + (i + 2) + ". " + children.get(i).getName());
-        }
-        System.out.print("Select collection (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index == 0) return root.getId();
-            if (index > 0 && index <= children.size()) {
-                return children.get(index - 1).getId();
-            }
-            System.out.println("Invalid selection.");
-            return null;
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
-    }
-
-    private String selectDeckFromCollection(Collection collection) {
-        List<Deck> decks = collection.getChildDecks();
-        if (decks.isEmpty()) {
-            System.out.println("No decks in this collection.");
-            return null;
-        }
-
-        System.out.println("\nDecks:");
-        for (int i = 0; i < decks.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
-        }
-        System.out.print("Select deck (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= decks.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return decks.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
     }
 
     private RepetitionAlgorithm selectAlgorithm() {
