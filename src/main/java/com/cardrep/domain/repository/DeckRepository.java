@@ -7,7 +7,7 @@ import java.util.Optional;
 
 /**
  * Repository interface for Deck persistence.
- * Defined in the domain layer - implementations reside in infrastructure.
+ * Defined in the domain layer - implementations reside in the plugin layer.
  */
 public interface DeckRepository {
 

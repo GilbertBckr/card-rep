@@ -14,12 +14,12 @@ import com.cardrep.application.learning.LearnCardUseCase;
 import com.cardrep.domain.repository.CardRepository;
 import com.cardrep.domain.repository.CollectionRepository;
 import com.cardrep.domain.repository.DeckRepository;
-import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
-import com.cardrep.infrastructure.observer.DeckStatsLogger;
-import com.cardrep.infrastructure.persistence.InMemoryCardRepository;
-import com.cardrep.infrastructure.persistence.InMemoryCollectionRepository;
-import com.cardrep.infrastructure.persistence.InMemoryDeckRepository;
+import com.cardrep.plugin.algorithm.RandomRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.SpacedRepetitionAlgorithm;
+import com.cardrep.plugin.observer.DeckStatsLogger;
+import com.cardrep.plugin.persistence.InMemoryCardRepository;
+import com.cardrep.plugin.persistence.InMemoryCollectionRepository;
+import com.cardrep.plugin.persistence.InMemoryDeckRepository;
 
 import java.util.Scanner;
 
@@ -30,7 +30,7 @@ import java.util.Scanner;
 public class CardRepApp {
 
     public static void main(String[] args) {
-        // Infrastructure
+        // Plugins
         CardRepository cardRepository = new InMemoryCardRepository();
         DeckRepository deckRepository = new InMemoryDeckRepository();
         CollectionRepository collectionRepository = new InMemoryCollectionRepository();

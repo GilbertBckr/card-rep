@@ -9,8 +9,8 @@ import com.cardrep.domain.model.DeckStats;
 import com.cardrep.domain.model.DeckStatsObserver;
 import com.cardrep.domain.repository.CollectionRepository;
 import com.cardrep.domain.service.RepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.RandomRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.SpacedRepetitionAlgorithm;
 
 import java.util.Scanner;
 
