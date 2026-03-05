@@ -2,6 +2,10 @@
 
 A terminal-based spaced repetition learning application (similar to Anki) built in **Java 25** with **Maven**. Users can create collections, organize decks, add cards, and learn them in interactive sessions using configurable scheduling algorithms.
 
+The application offers two user interfaces:
+- **CLI** (Command Line Interface) — traditional text menus with numbered options
+- **TUI** (Text User Interface) — vim-style keyboard navigation with a visual interface
+
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
@@ -19,7 +23,7 @@ A terminal-based spaced repetition learning application (similar to Anki) built 
 
 ### Purpose
 
-Card Repetition is a CLI application that implements the core concepts of spaced repetition learning. Users organize their study material into **Collections** (hierarchical folders) containing **Decks**, which hold **Cards** (front/back flashcards). During a **Learning Session**, cards are presented based on a **Repetition Algorithm** (Strategy Pattern), and the user rates the perceived **Difficulty**. The system tracks **CardStats** and **DeckStats**, notifying observers (Observer Pattern) when statistics change.
+Card Repetition is a terminal application that implements the core concepts of spaced repetition learning. Users organize their study material into **Collections** (hierarchical folders) containing **Decks**, which hold **Cards** (front/back flashcards). During a **Learning Session**, cards are presented based on a **Repetition Algorithm** (Strategy Pattern), and the user rates the perceived **Difficulty**. The system tracks **CardStats** and **DeckStats**, notifying observers (Observer Pattern) when statistics change.
 
 ### How to Build and Run
 
@@ -30,13 +34,72 @@ mvn clean compile
 # Run tests
 mvn test
 
-# Run the application
+# Run the CLI (default)
 mvn exec:java -Dexec.mainClass="com.cardrep.adapter.cli.CardRepApp"
+
+# Run the TUI (vim-style navigation)
+mvn exec:java -Dexec.mainClass="com.cardrep.adapter.cli.CardRepApp" -Dexec.args="--tui"
 
 # Generate test coverage report
 mvn test jacoco:report
 # Coverage report at: target/site/jacoco/index.html
 ```
+
+### User Interfaces
+
+#### CLI (Command Line Interface)
+
+The CLI uses traditional numbered menus. Users type a number and press Enter to select options:
+
+```
+--- Main Menu ---
+1. Overview (browse collections)
+2. Manage Collections
+3. Manage Decks
+4. Manage Cards
+5. Start Learning Session
+0. Exit
+> 
+```
+
+#### TUI (Text User Interface)
+
+The TUI provides a visual interface with vim-style keyboard navigation:
+
+```
+┌─ Card Repetition - Main Menu ─────────────────┐
+│                                               │
+│  > Start Learning Session                     │
+│    Browse Collections                         │
+│    Manage Collections                         │
+│    Manage Decks                               │
+│    Manage Cards                               │
+│    Exit                                       │
+│                                               │
+│  [j/k] Navigate   [Enter] Select   [q] Back   │
+└───────────────────────────────────────────────┘
+```
+
+**TUI Key Bindings:**
+
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Move down |
+| `k` / `↑` | Move up |
+| `g` | Jump to top |
+| `G` | Jump to bottom |
+| `Enter` | Select / Confirm |
+| `q` / `Esc` | Back / Cancel |
+| `y` / `n` | Confirm dialogs |
+| `1-4` | Rate card difficulty |
+| `Backspace` | Delete character (text input) |
+
+**TUI Features:**
+- Full CRUD operations (Collections, Decks, Cards)
+- Interactive learning sessions with card flipping
+- Collection tree browser
+- Deck statistics viewer
+- Text input for creating/editing content
 
 ### Technology Stack
 
@@ -47,6 +110,7 @@ mvn test jacoco:report
 | Testing          | JUnit 5.10.2            |
 | Mocking          | Mockito 5.18.0          |
 | Code Coverage    | JaCoCo 0.8.14           |
+| TUI Library      | Lanterna 3.1.2          |
 | Persistence      | In-Memory (HashMap)     |
 
 ---
