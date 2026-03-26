@@ -102,24 +102,25 @@ public class Deck {
 
     public DeckStats computeStats() {
         int total = cards.size();
-        int reviewed = 0;
-        int easy = 0;
-        int medium = 0;
-        int hard = 0;
-        int failed = 0;
+        List<Card> reviewedCards = getReviewedCards();
+        int reviewed = reviewedCards.size();
+        return new DeckStats(total, reviewed,
+                countByLastDifficulty(reviewedCards, Difficulty.EASY),
+                countByLastDifficulty(reviewedCards, Difficulty.MEDIUM),
+                countByLastDifficulty(reviewedCards, Difficulty.HARD),
+                countByLastDifficulty(reviewedCards, Difficulty.AGAIN));
+    }
 
-        for (Card card : cards) {
-            if (card.getStats().hasBeenReviewed()) {
-                reviewed++;
-                Difficulty lastDifficulty = card.getStats().getLastDifficulty();
-                if (lastDifficulty == Difficulty.EASY) easy++;
-                else if (lastDifficulty == Difficulty.MEDIUM) medium++;
-                else if (lastDifficulty == Difficulty.HARD) hard++;
-                else if (lastDifficulty == Difficulty.AGAIN) failed++;
-            }
-        }
+    private List<Card> getReviewedCards() {
+        return cards.stream()
+                .filter(card -> card.getStats().hasBeenReviewed())
+                .toList();
+    }
 
-        return new DeckStats(total, reviewed, easy, medium, hard, failed);
+    private int countByLastDifficulty(List<Card> reviewedCards, Difficulty difficulty) {
+        return (int) reviewedCards.stream()
+                .filter(card -> card.getStats().getLastDifficulty() == difficulty)
+                .count();
     }
 
     public void addObserver(DeckStatsObserver observer) {

@@ -1,4 +1,4 @@
-package com.cardrep.infrastructure.algorithm;
+package com.cardrep.plugin.algorithm;
 
 import com.cardrep.domain.model.Card;
 import com.cardrep.domain.service.RepetitionAlgorithm;

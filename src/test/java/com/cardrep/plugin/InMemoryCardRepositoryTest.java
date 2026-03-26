@@ -1,8 +1,8 @@
-package com.cardrep.infrastructure;
+package com.cardrep.plugin;
 
 import com.cardrep.domain.model.Card;
 import com.cardrep.domain.model.CardContent;
-import com.cardrep.infrastructure.persistence.InMemoryCardRepository;
+import com.cardrep.plugin.persistence.InMemoryCardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

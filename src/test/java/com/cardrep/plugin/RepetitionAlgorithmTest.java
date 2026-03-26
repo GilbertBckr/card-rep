@@ -1,10 +1,10 @@
-package com.cardrep.infrastructure;
+package com.cardrep.plugin;
 
 import com.cardrep.domain.model.Card;
 import com.cardrep.domain.model.CardContent;
 import com.cardrep.domain.model.Difficulty;
-import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.SpacedRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.RandomRepetitionAlgorithm;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

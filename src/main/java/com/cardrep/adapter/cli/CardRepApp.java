@@ -14,12 +14,12 @@ import com.cardrep.application.learning.LearnCardUseCase;
 import com.cardrep.domain.repository.CardRepository;
 import com.cardrep.domain.repository.CollectionRepository;
 import com.cardrep.domain.repository.DeckRepository;
-import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
-import com.cardrep.infrastructure.observer.DeckStatsLogger;
-import com.cardrep.infrastructure.persistence.InMemoryCardRepository;
-import com.cardrep.infrastructure.persistence.InMemoryCollectionRepository;
-import com.cardrep.infrastructure.persistence.InMemoryDeckRepository;
+import com.cardrep.plugin.algorithm.RandomRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.SpacedRepetitionAlgorithm;
+import com.cardrep.plugin.observer.DeckStatsLogger;
+import com.cardrep.plugin.persistence.InMemoryCardRepository;
+import com.cardrep.plugin.persistence.InMemoryCollectionRepository;
+import com.cardrep.plugin.persistence.InMemoryDeckRepository;
 
 import java.util.Scanner;
 
@@ -53,12 +53,15 @@ public class CardRepApp {
 
         Scanner scanner = new Scanner(System.in);
 
-        CardMenu cardMenu = new CardMenu(scanner, createCard, modifyCard, deleteCard, deckRepository);
+        MenuHelper menuHelper = new MenuHelper(scanner, deckRepository, collectionRepository);
+
+        CardMenu cardMenu = new CardMenu(scanner, createCard, modifyCard, deleteCard,
+                deckRepository, menuHelper);
         DeckMenu deckMenu = new DeckMenu(scanner, createDeck, modifyDeck, deleteDeck,
-                collectionRepository, randomAlgorithm, spacedAlgorithm, statsLogger);
+                collectionRepository, randomAlgorithm, spacedAlgorithm, statsLogger, menuHelper);
         CollectionMenu collectionMenu = new CollectionMenu(scanner, createCollection,
-                modifyCollection, deleteCollection, collectionRepository);
-        LearningSession learningSession = new LearningSession(scanner, nextCard, learnCard, deckRepository);
+                modifyCollection, deleteCollection, collectionRepository, menuHelper);
+        LearningSession learningSession = new LearningSession(scanner, nextCard, learnCard, menuHelper);
 
         MainMenu mainMenu = new MainMenu(scanner, cardMenu, deckMenu, collectionMenu,
                 learningSession, collectionRepository);
