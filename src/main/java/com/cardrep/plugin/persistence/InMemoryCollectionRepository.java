@@ -1,4 +1,4 @@
-package com.cardrep.infrastructure.persistence;
+package com.cardrep.plugin.persistence;
 
 import com.cardrep.domain.model.Collection;
 import com.cardrep.domain.model.RootCollection;

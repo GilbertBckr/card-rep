@@ -1,4 +1,4 @@
-package com.cardrep.infrastructure.persistence;
+package com.cardrep.plugin.persistence;
 
 import com.cardrep.domain.model.Card;
 import com.cardrep.domain.repository.CardRepository;

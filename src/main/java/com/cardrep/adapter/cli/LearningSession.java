@@ -3,11 +3,8 @@ package com.cardrep.adapter.cli;
 import com.cardrep.application.deck.NextCardUseCase;
 import com.cardrep.application.learning.LearnCardUseCase;
 import com.cardrep.domain.model.Card;
-import com.cardrep.domain.model.Deck;
 import com.cardrep.domain.model.Difficulty;
-import com.cardrep.domain.repository.DeckRepository;
 
-import java.util.List;
 import java.util.Scanner;
 
 public class LearningSession {
@@ -15,18 +12,18 @@ public class LearningSession {
     private final Scanner scanner;
     private final NextCardUseCase nextCardUseCase;
     private final LearnCardUseCase learnCardUseCase;
-    private final DeckRepository deckRepository;
+    private final MenuHelper menuHelper;
 
     public LearningSession(Scanner scanner, NextCardUseCase nextCardUseCase,
-                           LearnCardUseCase learnCardUseCase, DeckRepository deckRepository) {
+                           LearnCardUseCase learnCardUseCase, MenuHelper menuHelper) {
         this.scanner = scanner;
         this.nextCardUseCase = nextCardUseCase;
         this.learnCardUseCase = learnCardUseCase;
-        this.deckRepository = deckRepository;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         System.out.println("\n=== Learning Session Started ===");
@@ -37,10 +34,10 @@ public class LearningSession {
             try {
                 Card card = nextCardUseCase.execute(deckId);
 
-                System.out.println("┌─────────────────────────────┐");
-                System.out.println("│ FRONT:                      │");
-                System.out.println("│ " + padRight(card.getFront().getText(), 28) + "│");
-                System.out.println("└─────────────────────────────┘");
+                System.out.println("-------------------------------");
+                System.out.println("| FRONT:                      |");
+                System.out.println("| " + padRight(card.getFront().getText(), 28) + "|");
+                System.out.println("-------------------------------");
 
                 System.out.print("Press Enter to reveal (or 'quit'): ");
                 String input = scanner.nextLine().trim();
@@ -49,10 +46,10 @@ public class LearningSession {
                     continue;
                 }
 
-                System.out.println("┌─────────────────────────────┐");
-                System.out.println("│ BACK:                       │");
-                System.out.println("│ " + padRight(card.getBack().getText(), 28) + "│");
-                System.out.println("└─────────────────────────────┘");
+                System.out.println("-------------------------------");
+                System.out.println("| BACK:                       |");
+                System.out.println("| " + padRight(card.getBack().getText(), 28) + "|");
+                System.out.println("-------------------------------");
 
                 Difficulty difficulty = rateDifficulty();
                 if (difficulty == null) {
@@ -96,34 +93,6 @@ public class LearningSession {
                 yield Difficulty.MEDIUM;
             }
         };
-    }
-
-    private String selectDeck() {
-        List<Deck> decks = deckRepository.findAll();
-        if (decks.isEmpty()) {
-            System.out.println("No decks available. Create a deck and add cards first.");
-            return null;
-        }
-
-        System.out.println("\nAvailable decks:");
-        for (int i = 0; i < decks.size(); i++) {
-            Deck deck = decks.get(i);
-            System.out.println("  " + (i + 1) + ". " + deck.getName()
-                    + " (" + deck.getCards().size() + " cards)");
-        }
-        System.out.print("Select deck (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= decks.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return decks.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
-        }
     }
 
     private String padRight(String text, int length) {

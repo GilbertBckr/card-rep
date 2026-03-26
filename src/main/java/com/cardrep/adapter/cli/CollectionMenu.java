@@ -16,16 +16,19 @@ public class CollectionMenu {
     private final ModifyCollectionUseCase modifyCollectionUseCase;
     private final DeleteCollectionUseCase deleteCollectionUseCase;
     private final CollectionRepository collectionRepository;
+    private final MenuHelper menuHelper;
 
     public CollectionMenu(Scanner scanner, CreateCollectionUseCase createCollectionUseCase,
                           ModifyCollectionUseCase modifyCollectionUseCase,
                           DeleteCollectionUseCase deleteCollectionUseCase,
-                          CollectionRepository collectionRepository) {
+                          CollectionRepository collectionRepository,
+                          MenuHelper menuHelper) {
         this.scanner = scanner;
         this.createCollectionUseCase = createCollectionUseCase;
         this.modifyCollectionUseCase = modifyCollectionUseCase;
         this.deleteCollectionUseCase = deleteCollectionUseCase;
         this.collectionRepository = collectionRepository;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
@@ -51,7 +54,7 @@ public class CollectionMenu {
     }
 
     private void createCollection() {
-        String parentId = selectCollection();
+        String parentId = menuHelper.selectCollection();
         if (parentId == null) return;
 
         System.out.print("Enter collection name: ");
@@ -112,31 +115,6 @@ public class CollectionMenu {
             System.out.println("Collection deleted successfully.");
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private String selectCollection() {
-        Collection root = collectionRepository.getRootCollection();
-        System.out.println("\nCollections:");
-        System.out.println("  1. " + root.getName() + " (Root)");
-
-        List<Collection> children = root.getChildCollections();
-        for (int i = 0; i < children.size(); i++) {
-            System.out.println("  " + (i + 2) + ". " + children.get(i).getName());
-        }
-        System.out.print("Select collection (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index == 0) return root.getId();
-            if (index > 0 && index <= children.size()) {
-                return children.get(index - 1).getId();
-            }
-            System.out.println("Invalid selection.");
-            return null;
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
         }
     }
 

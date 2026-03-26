@@ -18,15 +18,17 @@ public class CardMenu {
     private final ModifyCardUseCase modifyCardUseCase;
     private final DeleteCardUseCase deleteCardUseCase;
     private final DeckRepository deckRepository;
+    private final MenuHelper menuHelper;
 
     public CardMenu(Scanner scanner, CreateCardUseCase createCardUseCase,
                     ModifyCardUseCase modifyCardUseCase, DeleteCardUseCase deleteCardUseCase,
-                    DeckRepository deckRepository) {
+                    DeckRepository deckRepository, MenuHelper menuHelper) {
         this.scanner = scanner;
         this.createCardUseCase = createCardUseCase;
         this.modifyCardUseCase = modifyCardUseCase;
         this.deleteCardUseCase = deleteCardUseCase;
         this.deckRepository = deckRepository;
+        this.menuHelper = menuHelper;
     }
 
     public void run() {
@@ -54,7 +56,7 @@ public class CardMenu {
     }
 
     private void createCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         System.out.print("Enter front text: ");
@@ -82,7 +84,7 @@ public class CardMenu {
     }
 
     private void modifyCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         String cardId = selectCard(deckId);
@@ -113,7 +115,7 @@ public class CardMenu {
     }
 
     private void deleteCard() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         String cardId = selectCard(deckId);
@@ -128,7 +130,7 @@ public class CardMenu {
     }
 
     private void listCards() {
-        String deckId = selectDeck();
+        String deckId = menuHelper.selectDeck();
         if (deckId == null) return;
 
         Deck deck = deckRepository.findById(deckId).orElse(null);
@@ -149,32 +151,6 @@ public class CardMenu {
             System.out.println("  " + (i + 1) + ". Front: " + card.getFront()
                     + " | Back: " + card.getBack()
                     + " | Reviews: " + card.getStats().getTotalReviews());
-        }
-    }
-
-    private String selectDeck() {
-        List<Deck> decks = deckRepository.findAll();
-        if (decks.isEmpty()) {
-            System.out.println("No decks available. Create a deck first.");
-            return null;
-        }
-
-        System.out.println("\nAvailable decks:");
-        for (int i = 0; i < decks.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
-        }
-        System.out.print("Select deck (number): ");
-
-        try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= decks.size()) {
-                System.out.println("Invalid selection.");
-                return null;
-            }
-            return decks.get(index).getId();
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid input.");
-            return null;
         }
     }
 

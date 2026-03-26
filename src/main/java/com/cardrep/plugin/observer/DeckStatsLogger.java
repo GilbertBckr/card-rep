@@ -1,4 +1,4 @@
-package com.cardrep.infrastructure.observer;
+package com.cardrep.plugin.observer;
 
 import com.cardrep.domain.model.Deck;
 import com.cardrep.domain.model.DeckStats;
