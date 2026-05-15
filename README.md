@@ -1,65 +1,90 @@
-# Card Repetition (card-rep)
+# Programmentwurf
 
-A terminal-based spaced repetition learning application (similar to Anki) built in **Java 21** with **Maven**. Users can create collections, organize decks, add cards, and learn them in interactive sessions using configurable scheduling algorithms.
+**Card Repetition (card-rep)**
 
-## Table of Contents
+Name: [Name, Vorname]
+Matrikelnummer: [MNR]
 
-1. [Introduction](#1-introduction)
-2. [Clean Architecture](#2-clean-architecture)
-3. [SOLID](#3-solid)
-4. [Further Principles (GRASP, DRY)](#4-further-principles)
-5. [Unit Tests](#5-unit-tests)
-6. [Domain-Driven Design](#6-domain-driven-design)
-7. [Refactoring](#7-refactoring)
-8. [Design Patterns](#8-design-patterns)
+Abgabedatum: [DATUM]
 
 ---
 
-## 1. Introduction
+## Inhaltsverzeichnis
 
-### Purpose
+1. [Kapitel 1: Einführung](#kapitel-1-einführung)
+2. [Kapitel 2: Clean Architecture](#kapitel-2-clean-architecture)
+3. [Kapitel 3: SOLID](#kapitel-3-solid)
+4. [Kapitel 4: Weitere Prinzipien](#kapitel-4-weitere-prinzipien)
+5. [Kapitel 5: Unit Tests](#kapitel-5-unit-tests)
+6. [Kapitel 6: Domain Driven Design](#kapitel-6-domain-driven-design)
+7. [Kapitel 7: Refactoring](#kapitel-7-refactoring)
+8. [Kapitel 8: Entwurfsmuster](#kapitel-8-entwurfsmuster)
 
-Card Repetition is a CLI application that implements the core concepts of spaced repetition learning. Users organize their study material into **Collections** (hierarchical folders) containing **Decks**, which hold **Cards** (front/back flashcards). During a **Learning Session**, cards are presented based on a **Repetition Algorithm** (Strategy Pattern), and the user rates the perceived **Difficulty**. The system tracks **CardStats** and **DeckStats**, notifying observers (Observer Pattern) when statistics change.
+---
 
-### How to Build and Run
+## Kapitel 1: Einführung
+
+### Übersicht über die Applikation
+
+Card Repetition ist eine terminalbasierte Lernapplikation für Spaced Repetition (ähnlich Anki), implementiert in **Java 25** mit **Maven**. Benutzer organisieren Lernmaterial in **Collections** (hierarchische Ordner), die **Decks** enthalten, welche wiederum **Cards** (Vorder-/Rückseite-Karteikarten) beinhalten. Während einer **Learning Session** werden Karten basierend auf einem konfigurierbaren **Repetition Algorithm** (Strategy Pattern) präsentiert. Der Benutzer bewertet die wahrgenommene **Difficulty**, und das System verfolgt **CardStats** und **DeckStats**, wobei Observer (Observer Pattern) über Statistikänderungen benachrichtigt werden.
+
+Die Applikation löst das Problem des effizienten Lernens durch Wiederholung: Schwierige Karten werden häufiger präsentiert als leichte, was den Lerneffekt maximiert.
+
+### Wie startet man die Applikation?
+
+**Voraussetzungen:**
+- Java 25 (JDK)
+- Maven 3.x
+
+**Schritte:**
 
 ```bash
-# Build
+# Repository klonen
+git clone git@github.com:GilbertBckr/card-rep.git
+cd card-rep
+
+# Projekt kompilieren
 mvn clean compile
 
-# Run tests
+# Applikation starten
+mvn exec:java -Dexec.mainClass="com.cardrep.adapter.cli.CardRepApp"
+```
+
+### Wie testet man die Applikation?
+
+```bash
+# Alle Unit Tests ausführen
 mvn test
 
-# Run the application
-mvn exec:java -Dexec.mainClass="com.cardrep.adapter.cli.CardRepApp"
-
-# Generate test coverage report
+# Test Coverage Report generieren
 mvn test jacoco:report
-# Coverage report at: target/site/jacoco/index.html
+# Report öffnen: target/site/jacoco/index.html
 ```
 
 ### Technology Stack
 
-| Component        | Technology              |
+| Komponente       | Technologie             |
 |------------------|-------------------------|
-| Language         | Java 21                 |
+| Sprache          | Java 25                 |
 | Build Tool       | Maven                   |
 | Testing          | JUnit 5.10.2            |
-| Mocking          | Mockito 5.11.0          |
-| Code Coverage    | JaCoCo 0.8.11           |
-| Persistence      | In-Memory (HashMap)     |
+| Mocking          | Mockito 5.18.0          |
+| Code Coverage    | JaCoCo 0.8.14           |
+| Persistenz       | In-Memory (HashMap)     |
 
 ### Kommentar-Richtlinie
 
-Dieses Projekt folgt dem Clean-Code-Prinzip für Kommentare: Code soll selbsterklärend sein. Kommentare werden ausschließlich für **Design-Entscheidungen** verwendet (z.B. gewählte Entwurfsmuster, bewusste Prinzipverletzungen). Erklärende Kommentare, die lediglich beschreiben was der Code tut, werden vermieden: stattdessen drücken aussagekräftige Methoden- und Variablennamen die Intention aus.
+Dieses Projekt folgt dem Clean-Code-Prinzip für Kommentare: Code soll selbsterklärend sein. Kommentare werden ausschließlich für **nicht-offensichtliche Design-Entscheidungen** verwendet (z.B. Geschäftsregeln, Invarianten, bewusste Einschränkungen, Kaskadenverhalten). Entwurfsmuster-Annotationen werden nicht kommentiert, da sie aus der Code-Struktur ersichtlich sind. Erklärende Kommentare, die lediglich beschreiben was der Code tut, werden vermieden: stattdessen drücken aussagekräftige Methoden- und Variablennamen die Intention aus.
 
 ---
 
-## 2. Clean Architecture
+## Kapitel 2: Clean Architecture
 
-The project follows **Clean Architecture** with four distinct layers. Dependencies point inward: the domain layer has no dependencies on any other layer; the application layer depends only on the domain; infrastructure and adapter layers depend on the inner layers but never the reverse.
+### Was ist Clean Architecture?
 
-### Layer Diagram
+Clean Architecture ist ein Architekturmuster, das Software in konzentrische Schichten unterteilt. Die zentrale Regel ist die **Dependency Rule**: Abhängigkeiten dürfen nur von außen nach innen zeigen. Die inneren Schichten (Domain, Application) kennen die äußeren Schichten (Plugin, Adapter) nicht. Dies ermöglicht austauschbare Infrastruktur (z.B. Datenbank wechseln), unabhängige Testbarkeit der Geschäftslogik, und klare Trennung der Verantwortlichkeiten. Die Domain-Schicht enthält Entitäten und Geschäftsregeln, die Application-Schicht orchestriert Use Cases, die Plugin-Schicht liefert Implementierungen, und die Adapter-Schicht verbindet mit der Außenwelt.
+
+### Schichtendiagramm
 
 ```mermaid
 flowchart TD
@@ -67,17 +92,17 @@ flowchart TD
         A["CardRepApp, MainMenu, CardMenu, DeckMenu,
         CollectionMenu, LearningSession, MenuHelper"]
     end
-    subgraph PluginLayer["Infrastructure"]
+    subgraph PluginLayer["Plugin"]
         B["InMemoryCardRepository, InMemoryDeckRepository,
         InMemoryCollectionRepository,
         RandomRepetitionAlgorithm, SpacedRepetitionAlgorithm,
         DeckStatsLogger"]
     end
     subgraph Application["Application"]
-        C["CreateCardUseCase, ModifyCardUseCase, DeleteCardUC,
-        CreateDeckUseCase, ModifyDeckUseCase, DeleteDeckUC,
+        C["CreateCardUseCase, ModifyCardUseCase, DeleteCardUseCase,
+        CreateDeckUseCase, ModifyDeckUseCase, DeleteDeckUseCase,
         NextCardUseCase, LearnCardUseCase,
-        CreateCollectionUC, ModifyCollectionUC, DeleteCollUC"]
+        CreateCollectionUseCase, ModifyCollectionUseCase, DeleteCollectionUseCase"]
     end
     subgraph Domain["Domain"]
         D["Card, Deck, Collection, RootCollection,
@@ -92,54 +117,282 @@ flowchart TD
     Application --> Domain
 ```
 
-### Dependency Rule
+### Analyse der Dependency Rule
 
-The **Dependency Rule** states that source code dependencies must point inward: outer layers may depend on inner layers, but never the reverse.
+#### Positiv-Beispiel: CreateCardUseCase
 
-**Positive Example: Use cases depend on domain interfaces, not implementations:**
+`CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) hängt ausschließlich von Domain-Interfaces ab (`CardRepository`, `DeckRepository`). Es hat keine Kenntnis von `InMemoryCardRepository` oder einer anderen Plugin-Klasse.
 
-The `CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) depends on `CardRepository` and `DeckRepository`, which are interfaces defined in the domain layer (`src/main/java/com/cardrep/domain/repository/`). It has no knowledge of `InMemoryCardRepository` or any infrastructure class. This allows swapping the storage mechanism without changing any application logic.
+```mermaid
+classDiagram
+    class CreateCardUseCase {
+        -CardRepository cardRepository
+        -DeckRepository deckRepository
+        +execute(deckId, front, back) Card
+    }
+    class CardRepository {
+        <<interface>>
+        +save(card) Card
+        +findById(id) Optional~Card~
+    }
+    class DeckRepository {
+        <<interface>>
+        +findById(id) Optional~Deck~
+        +save(deck) Deck
+    }
+    CreateCardUseCase --> CardRepository : depends on
+    CreateCardUseCase --> DeckRepository : depends on
+```
 
-**Negative Example: DeckMenu depends on concrete algorithm types:**
+**Analyse:** `CreateCardUseCase` (Application-Schicht) hängt ab von `CardRepository` und `DeckRepository` (Domain-Schicht): Abhängigkeit zeigt nach innen. Niemand aus der Domain hängt von `CreateCardUseCase` ab. Die konkrete Implementierung `InMemoryCardRepository` (Plugin) kennt `CreateCardUseCase` nicht: die Dependency Rule ist eingehalten.
 
-The `DeckMenu` class (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:12-13`) imports and depends on `RandomRepetitionAlgorithm` and `SpacedRepetitionAlgorithm` (concrete infrastructure classes) rather than using only the `RepetitionAlgorithm` interface. This violates the Dependency Rule because the adapter layer directly references the infrastructure layer. A better approach would be to inject a `Map<String, RepetitionAlgorithm>` or a factory, so `DeckMenu` only depends on the domain interface.
+#### Negativ-Beispiel: DeckMenu
+
+`DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:12-13`) importiert konkrete Plugin-Klassen (`RandomRepetitionAlgorithm`, `SpacedRepetitionAlgorithm`) statt sich nur auf das Domain-Interface `RepetitionAlgorithm` zu verlassen.
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -DeckStatsObserver statsObserver
+        +run() void
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+    class RandomRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+    }
+    class SpacedRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+    }
+    DeckMenu --> RandomRepetitionAlgorithm : violates DR
+    DeckMenu --> SpacedRepetitionAlgorithm : violates DR
+    RandomRepetitionAlgorithm ..|> RepetitionAlgorithm
+    SpacedRepetitionAlgorithm ..|> RepetitionAlgorithm
+```
+
+**Analyse:** `DeckMenu` (Adapter-Schicht) hängt direkt von `RandomRepetitionAlgorithm` und `SpacedRepetitionAlgorithm` (Plugin-Schicht) ab. Die Adapter-Schicht referenziert die Plugin-Schicht: das verletzt die Dependency Rule, da beide äußere Schichten sind und keine davon von der anderen abhängen sollte. Lösung: `DeckMenu` sollte eine `List<RepetitionAlgorithm>` injiziert bekommen und das Menü dynamisch aus `getName()` aufbauen.
 
 ```java
-// DeckMenu.java:12-13: Violation: importing concrete infrastructure types
-import com.cardrep.infrastructure.algorithm.RandomRepetitionAlgorithm;
-import com.cardrep.infrastructure.algorithm.SpacedRepetitionAlgorithm;
+// DeckMenu.java:12-13: Verletzung: Import konkreter Plugin-Typen
+import com.cardrep.plugin.algorithm.RandomRepetitionAlgorithm;
+import com.cardrep.plugin.algorithm.SpacedRepetitionAlgorithm;
 ```
+
+### Analyse der Schichten
+
+#### Schicht: Domain: `Deck`
+
+```mermaid
+classDiagram
+    class Deck {
+        -String id
+        -String name
+        -List~Card~ cards
+        -RepetitionAlgorithm repetitionAlgorithm
+        -List~DeckStatsObserver~ observers
+        +addCard(card) void
+        +removeCard(cardId) void
+        +getNextCard() Card
+        +computeStats() DeckStats
+        +notifyObservers() void
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+        +selectNextCard(cards) Card
+    }
+    class DeckStatsObserver {
+        <<interface>>
+        +onDeckStatsChanged(deck, stats) void
+    }
+    class Card {
+        -String id
+    }
+    Deck --> RepetitionAlgorithm : strategy
+    Deck --> DeckStatsObserver : observers
+    Deck *-- Card : owns
+```
+
+**Aufgabe:** `Deck` ist das zentrale Aggregate Root der Domain-Schicht. Es verwaltet eine Sammlung von Cards, delegiert die Kartenauswahl an eine konfigurierbare Strategie und benachrichtigt Observer bei Änderungen.
+
+**Einordnung:** Domain-Schicht, weil `Deck` ausschließlich Geschäftslogik enthält (Kartenauswahl, Statistikberechnung, Observer-Benachrichtigung) und keine Abhängigkeiten zu äußeren Schichten hat. Alle Abhängigkeiten (`RepetitionAlgorithm`, `DeckStatsObserver`) sind als Interfaces in der Domain definiert.
+
+#### Schicht: Application: `LearnCardUseCase`
+
+```mermaid
+classDiagram
+    %% ──── Application Layer ────
+    class LearnCardUseCase {
+        -CardRepository cardRepository
+        -DeckRepository deckRepository
+        +execute(cardId, deckId, difficulty) Card
+    }
+
+    %% ──── Domain Layer ────
+    class CardRepository {
+        <<interface>>
+        +findById(id) Optional~Card~
+        +save(card) Card
+    }
+    class DeckRepository {
+        <<interface>>
+        +findById(id) Optional~Deck~
+    }
+    class Card {
+        -CardStats stats
+        +recordReview(difficulty) void
+    }
+    class Deck {
+        -List~DeckStatsObserver~ observers
+        +notifyObservers() void
+    }
+    class Difficulty {
+        <<enumeration>>
+        EASY
+        MEDIUM
+        HARD
+        AGAIN
+    }
+    class DeckStatsObserver {
+        <<interface>>
+        +onDeckStatsChanged(deck, stats) void
+    }
+
+    LearnCardUseCase --> CardRepository
+    LearnCardUseCase --> DeckRepository
+    LearnCardUseCase ..> Difficulty : uses
+    CardRepository ..> Card
+    DeckRepository ..> Deck
+    Card ..> Difficulty
+    Deck --> DeckStatsObserver : notifies
+```
+
+**Aufgabe:** `LearnCardUseCase` orchestriert den Lernvorgang: Es lädt die Karte, zeichnet die Review auf (mit Schwierigkeitsgrad), speichert die aktualisierte Karte und benachrichtigt Observer über Deck-Statistikänderungen.
+
+**Einordnung:** Application-Schicht, weil es einen konkreten Anwendungsfall orchestriert und dabei ausschließlich Domain-Interfaces verwendet. Es enthält keine Geschäftslogik selbst (die liegt in `Card.recordReview()` und `Deck.notifyObservers()`), sondern koordiniert den Ablauf zwischen Domain-Objekten.
 
 ---
 
-## 3. SOLID
+## Kapitel 3: SOLID
 
-### 3.1 Single Responsibility Principle (SRP)
+### Analyse Single-Responsibility-Principle (SRP)
 
-> A class should have only one reason to change.
+#### Positiv-Beispiel: CreateCardUseCase
 
-**Positive Example: Each use case has a single responsibility:**
+```mermaid
+classDiagram
+    class CreateCardUseCase {
+        -CardRepository cardRepository
+        -DeckRepository deckRepository
+        +execute(deckId, front, back) Card
+    }
+```
 
-Each use case class in the application layer handles exactly one operation. For instance, `CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) is solely responsible for creating a card and adding it to a deck. It does not handle card deletion, modification, or learning. If the card creation logic changes, only this class needs to be modified.
+**Aufgabe:** `CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) hat genau eine Verantwortlichkeit: das Erstellen einer neuen Karte und deren Hinzufügen zu einem Deck. Es validiert die Deck-Existenz, erstellt die Karte, speichert sie und fügt sie dem Deck hinzu. Wenn sich die Karten-Erstellungslogik ändert, muss nur diese Klasse angepasst werden.
 
-**Negative Example: DeckMenu has multiple responsibilities:**
+#### Negativ-Beispiel: DeckMenu
 
-`DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java`) handles CRUD operations for decks, algorithm selection, stats display, AND user input parsing. It has four distinct reasons to change: (1) deck operations change, (2) algorithm selection changes, (3) stats display format changes, (4) input handling changes. A more SRP-compliant design would separate the algorithm selection into its own class.
+```mermaid
+classDiagram
+    class DeckMenu {
+        -Scanner scanner
+        -CreateDeckUseCase createDeckUseCase
+        -ModifyDeckUseCase modifyDeckUseCase
+        -DeleteDeckUseCase deleteDeckUseCase
+        -CollectionRepository collectionRepository
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -DeckStatsObserver statsObserver
+        -MenuHelper menuHelper
+        +run() void
+        -createDeck() void
+        -modifyDeck() void
+        -deleteDeck() void
+        -viewDeckStats() void
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+```
 
-### 3.2 Open/Closed Principle (OCP)
+**Aufgaben:** `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java`) hat mehrere Verantwortlichkeiten:
+1. CRUD-Operationen für Decks
+2. Algorithmus-Auswahl
+3. Statistik-Anzeige
+4. User-Input-Parsing
 
-> Software entities should be open for extension but closed for modification.
+Es hat vier Gründe sich zu ändern: (1) Deck-Operationen ändern sich, (2) Algorithmus-Auswahl ändert sich, (3) Statistik-Anzeige ändert sich, (4) Input-Handling ändert sich.
 
-**Positive Example: RepetitionAlgorithm is open for extension:**
+**Möglicher Lösungsweg:**
 
-New scheduling algorithms can be added by implementing the `RepetitionAlgorithm` interface (`src/main/java/com/cardrep/domain/service/RepetitionAlgorithm.java`) without modifying existing code. We already have `RandomRepetitionAlgorithm` and `SpacedRepetitionAlgorithm`. A third algorithm (e.g., `LeitnerAlgorithm`) could be added by simply creating a new class that implements the interface.
+```mermaid
+classDiagram
+    class DeckMenu {
+        -DeckMenuActions actions
+        -AlgorithmSelector algorithmSelector
+        +run() void
+    }
+    class DeckMenuActions {
+        +createDeck() void
+        +modifyDeck() void
+        +deleteDeck() void
+    }
+    class AlgorithmSelector {
+        -List~RepetitionAlgorithm~ algorithms
+        +selectAlgorithm() RepetitionAlgorithm
+    }
+    DeckMenu --> DeckMenuActions
+    DeckMenu --> AlgorithmSelector
+```
 
-**Negative Example: DeckMenu.selectAlgorithm() requires modification for new algorithms:**
+### Analyse Open-Closed-Principle (OCP)
 
-The `selectAlgorithm()` method in `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:183-198`) uses a hardcoded switch statement listing available algorithms. Adding a new algorithm requires modifying this method, violating OCP:
+#### Positiv-Beispiel: RepetitionAlgorithm
+
+```mermaid
+classDiagram
+    class RepetitionAlgorithm {
+        <<interface>>
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class RandomRepetitionAlgorithm {
+        -Random random
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class SpacedRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+        -calculatePriority(card) int
+        +getName() String
+    }
+    class LeitnerAlgorithm {
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    RepetitionAlgorithm <|.. RandomRepetitionAlgorithm
+    RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
+    RepetitionAlgorithm <|.. LeitnerAlgorithm : new algorithm
+```
+
+**Analyse:** Das `RepetitionAlgorithm`-Interface (`src/main/java/com/cardrep/domain/service/RepetitionAlgorithm.java`) ist offen für Erweiterung: Neue Algorithmen (z.B. `LeitnerAlgorithm`) können durch Implementierung des Interfaces hinzugefügt werden, ohne bestehenden Code zu modifizieren. Die existierenden Klassen `RandomRepetitionAlgorithm` und `SpacedRepetitionAlgorithm` bleiben unverändert. Das ist hier sinnvoll, weil verschiedene Lernstrategien ein natürlicher Erweiterungspunkt sind.
+
+#### Negativ-Beispiel: DeckMenu.selectAlgorithm()
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+    note for DeckMenu "selectAlgorithm() uses hardcoded switch. Adding new algorithm requires modification."
+```
+
+**Analyse:** Die Methode `selectAlgorithm()` in `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:195-210`) verwendet ein hardcodiertes Switch-Statement:
 
 ```java
-// DeckMenu.java: must be modified to add a new algorithm
 return switch (choice) {
     case "1" -> spacedAlgorithm;
     case "2" -> randomAlgorithm;
@@ -147,245 +400,731 @@ return switch (choice) {
 };
 ```
 
-### 3.3 Liskov Substitution Principle (LSP)
+Das Hinzufügen eines neuen Algorithmus erfordert eine Modifikation dieser Methode: OCP verletzt.
 
-> Subtypes must be substitutable for their base types without altering program correctness.
+**Möglicher Lösungsweg:**
 
-**Positive Example: RepetitionAlgorithm implementations are substitutable:**
+```mermaid
+classDiagram
+    class DeckMenu {
+        -List~RepetitionAlgorithm~ algorithms
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+        +getName() String
+    }
+    DeckMenu --> RepetitionAlgorithm : iterates over
+    note for DeckMenu "selectAlgorithm() dynamically builds menu from algorithms.getName(). OCP fulfilled."
+```
 
-Both `RandomRepetitionAlgorithm` and `SpacedRepetitionAlgorithm` can be substituted wherever a `RepetitionAlgorithm` is expected. The `Deck` class (`src/main/java/com/cardrep/domain/model/Deck.java:104-109`) calls `repetitionAlgorithm.selectNextCard(cards)` without knowing which concrete implementation is being used. Both implementations honor the contract: they accept a list of cards and return a card (or `null` if the list is empty).
+Lösung: Eine `List<RepetitionAlgorithm>` injizieren und das Menü dynamisch aufbauen. Neue Algorithmen werden einfach zur Liste hinzugefügt.
 
-**Positive Example: RootCollection extends Collection correctly:**
+### Analyse Dependency-Inversion-Principle (DIP)
 
-`RootCollection` (`src/main/java/com/cardrep/domain/model/RootCollection.java`) extends `Collection` and can be used anywhere a `Collection` is expected. It overrides `setName()` to throw `UnsupportedOperationException`, which could be seen as an LSP concern; however, this is an intentional design decision documented in the ubiquitous language: the root collection has a fixed identity and name. Callers navigating the collection tree treat it like any other collection for reading purposes.
+#### Positiv-Beispiel: DeleteDeckUseCase
 
-### 3.4 Interface Segregation Principle (ISP)
+```mermaid
+classDiagram
+    class DeleteDeckUseCase {
+        -DeckRepository deckRepository
+        -CardRepository cardRepository
+        -CollectionRepository collectionRepository
+        +execute(deckId, collectionId) void
+    }
+    class DeckRepository {
+        <<interface>>
+        +findById(id) Optional~Deck~
+        +deleteById(id) void
+    }
+    class CardRepository {
+        <<interface>>
+        +deleteById(id) void
+    }
+    class CollectionRepository {
+        <<interface>>
+        +findById(id) Optional~Collection~
+        +save(collection) Collection
+    }
+    DeleteDeckUseCase --> DeckRepository
+    DeleteDeckUseCase --> CardRepository
+    DeleteDeckUseCase --> CollectionRepository
+```
 
-> Clients should not be forced to depend on interfaces they do not use.
+**Begründung:** `DeleteDeckUseCase` (`src/main/java/com/cardrep/application/deck/DeleteDeckUseCase.java`) hängt ausschließlich von Abstraktionen ab (Interfaces definiert in der Domain-Schicht). Die konkreten Implementierungen (`InMemoryDeckRepository` etc.) werden am Composition Root (`CardRepApp.java`) injiziert. Das High-Level-Modul (Use Case) ist vom Low-Level-Modul (In-Memory Storage) entkoppelt.
 
-**Positive Example: Repository interfaces are focused:**
+#### Negativ-Beispiel: DeckMenu
 
-The repository interfaces (`CardRepository`, `DeckRepository`, `CollectionRepository`) in `src/main/java/com/cardrep/domain/repository/` each define only the operations relevant to their aggregate. `CollectionRepository` does not have `findAll()` or `existsById()` because collections are navigated via the tree structure starting from `getRootCollection()`. This keeps each interface minimal and focused.
+```mermaid
+classDiagram
+    class DeckMenu {
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        +run() void
+    }
+    class RandomRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+    }
+    class SpacedRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+    }
+    DeckMenu --> RandomRepetitionAlgorithm : concrete dependency
+    DeckMenu --> SpacedRepetitionAlgorithm : concrete dependency
+    RandomRepetitionAlgorithm ..|> RepetitionAlgorithm
+    SpacedRepetitionAlgorithm ..|> RepetitionAlgorithm
+```
 
-**Positive Example: DeckStatsObserver has a single method:**
-
-The `DeckStatsObserver` interface (`src/main/java/com/cardrep/domain/model/DeckStatsObserver.java`) defines only one method: `onDeckStatsChanged(Deck, DeckStats)`. Observers are not forced to implement unrelated methods. This is a clean, focused interface.
-
-### 3.5 Dependency Inversion Principle (DIP)
-
-> High-level modules should not depend on low-level modules. Both should depend on abstractions.
-
-**Positive Example: Use cases depend on repository interfaces:**
-
-All use cases depend on repository interfaces defined in the domain layer, not on concrete implementations. For example, `DeleteDeckUseCase` (`src/main/java/com/cardrep/application/deck/DeleteDeckUseCase.java`) accepts `DeckRepository`, `CardRepository`, and `CollectionRepository` in its constructor: all are interfaces. The concrete `InMemoryCardRepository` is injected at the composition root (`CardRepApp.java`).
-
-**Negative Example: DeckMenu depends on concrete algorithm classes:**
-
-As noted in the Dependency Rule section, `DeckMenu` directly depends on `RandomRepetitionAlgorithm` and `SpacedRepetitionAlgorithm` (concrete classes) rather than depending on the `RepetitionAlgorithm` abstraction. The constructor signature (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:35-49`) requires these concrete types:
+**Begründung:** `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:25-46`) hängt direkt von konkreten Klassen ab statt von Abstraktionen:
 
 ```java
-// Violation: constructor parameters are concrete types, not abstractions
+// Verletzung: Konstruktor-Parameter sind konkrete Typen, keine Abstraktionen
 private final RandomRepetitionAlgorithm randomAlgorithm;
 private final SpacedRepetitionAlgorithm spacedAlgorithm;
 ```
 
-A DIP-compliant approach would inject a `List<RepetitionAlgorithm>` and dynamically build the selection menu from `getName()`.
+Eine DIP-konforme Lösung wäre: `private final List<RepetitionAlgorithm> algorithms;`: dann hängt `DeckMenu` nur von der Abstraktion `RepetitionAlgorithm` ab.
+
+### Analyse Liskov-Substitution-Principle (LSP)
+
+#### Positiv-Beispiel: RepetitionAlgorithm-Implementierungen
+
+```mermaid
+classDiagram
+    class RepetitionAlgorithm {
+        <<interface>>
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class RandomRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class SpacedRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    RepetitionAlgorithm <|.. RandomRepetitionAlgorithm
+    RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
+```
+
+**Analyse:** Beide Implementierungen von `RepetitionAlgorithm` (`RandomRepetitionAlgorithm`, `SpacedRepetitionAlgorithm`) sind vollständig substituierbar: `Deck.getNextCard()` funktioniert korrekt unabhängig davon, welche Implementierung injiziert wird. Keine Implementierung wirft unerwartete Exceptions oder verändert die Semantik des Interfaces. Client-Code (z.B. `NextCardUseCase`) kann jede Implementierung verwenden, ohne sein Verhalten anzupassen.
+
+#### Negativ-Beispiel: RootCollection extends Collection
+
+```mermaid
+classDiagram
+    class Collection {
+        -String name
+        +setName(name) void
+        +addChildCollection(child) void
+    }
+    class RootCollection {
+        +setName(name) void
+    }
+    Collection <|-- RootCollection
+    note for RootCollection "setName() throws UnsupportedOperationException. Violates LSP: callers of Collection.setName() cannot safely substitute RootCollection."
+```
+
+**Analyse:** `RootCollection` (`src/main/java/com/cardrep/domain/model/RootCollection.java`) erbt von `Collection` und überschreibt `setName()` mit einer `UnsupportedOperationException`. Das verletzt LSP: Code der eine `Collection`-Referenz hält und `setName()` aufruft, erwartet eine erfolgreiche Umbenennung. Mit einer `RootCollection`-Instanz schlägt dieser Aufruf unerwartet fehl. Der Vertrag der Elternklasse (setName akzeptiert valide Namen) wird gebrochen.
+
+**Möglicher Lösungsweg:** Eine `RenamableCollection`-Abstraktion einführen oder `setName()` aus der Basisklasse entfernen und nur in einer spezialisierten Subklasse anbieten. Alternativ: Composition statt Inheritance verwenden.
+
+### Analyse Interface-Segregation-Principle (ISP)
+
+#### Positiv-Beispiel: DeckStatsObserver und RepetitionAlgorithm
+
+```mermaid
+classDiagram
+    class DeckStatsObserver {
+        <<interface>>
+        +onDeckStatsChanged(deck, stats) void
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    note for DeckStatsObserver "1 Methode: Clients müssen nur implementieren was sie brauchen"
+    note for RepetitionAlgorithm "2 Methoden: beide logisch zusammengehörig"
+```
+
+**Analyse:** `DeckStatsObserver` (`src/main/java/com/cardrep/domain/model/DeckStatsObserver.java`) hat genau eine Methode: `onDeckStatsChanged()`. Implementierende Klassen werden nicht gezwungen, Methoden zu implementieren die sie nicht brauchen. Ebenso hat `RepetitionAlgorithm` nur zwei eng zusammengehörige Methoden (`selectNextCard` und `getName`). Beide Interfaces sind schlank und fokussiert: das ISP ist eingehalten.
+
+#### Negativ-Beispiel: CollectionRepository
+
+```mermaid
+classDiagram
+    class CollectionRepository {
+        <<interface>>
+        +save(collection) Collection
+        +findById(id) Optional~Collection~
+        +deleteById(id) void
+        +getRootCollection() Collection
+    }
+    note for CollectionRepository "getRootCollection() ist eine Query-Methode die nicht alle Clients brauchen. Read-Only-Clients müssen trotzdem das gesamte Interface kennen."
+```
+
+**Analyse:** `CollectionRepository` (`src/main/java/com/cardrep/domain/repository/CollectionRepository.java`) kombiniert CRUD-Operationen (`save`, `deleteById`) mit einer speziellen Query-Methode (`getRootCollection`). Use Cases wie `DeleteCollectionUseCase` brauchen nur `findById` und `deleteById`, müssen aber das gesamte Interface kennen inkl. `getRootCollection()`. Das Interface könnte in ein `CollectionReader` (Lese-Operationen) und `CollectionWriter` (Schreib-Operationen) aufgeteilt werden. Hier ist die Verletzung mild, da das Interface insgesamt nur 4 Methoden hat: eine Aufteilung wäre möglich, aber der Nutzen im aktuellen Projektumfang gering.
 
 ---
 
-## 4. Further Principles
+## Kapitel 4: Weitere Prinzipien
 
-### 4.1 GRASP: Low Coupling
+### Analyse GRASP: Geringe Kopplung
 
-> Assign responsibilities so that coupling remains low.
+#### Positiv-Beispiel: CardStats
 
-**Positive Example:**
+```mermaid
+classDiagram
+    class CardStats {
+        -List~ReviewEntry~ reviewHistory
+        +withNewReview(difficulty) CardStats
+        +getTotalReviews() int
+        +hasBeenReviewed() boolean
+        +getLastDifficulty() Difficulty
+        +getLastReviewTime() LocalDateTime
+    }
+    class ReviewEntry {
+        -LocalDateTime timestamp
+        -Difficulty difficulty
+    }
+    class Difficulty {
+        <<enum>>
+        EASY
+        MEDIUM
+        HARD
+        AGAIN
+    }
+    CardStats *-- ReviewEntry
+    CardStats --> Difficulty
+```
 
-The domain layer has **zero dependencies** on any outer layer. `Card`, `Deck`, `Collection`, and all value objects are self-contained. The `RepetitionAlgorithm` and `DeckStatsObserver` interfaces are defined in the domain, allowing infrastructure implementations to be swapped without any domain changes. This low coupling means the domain can be tested in isolation without mocking frameworks.
+**Aufgabe:** `CardStats` (`src/main/java/com/cardrep/domain/model/CardStats.java`) verwaltet die Review-Historie einer Karte (Zeitpunkte, Schwierigkeitsgrade, Statistiken).
 
-**Negative Example:**
+**Begründung geringe Kopplung:** `CardStats` hat nur Abhängigkeiten zu seinen eigenen inneren Typen (`ReviewEntry`) und dem einfachen Enum `Difficulty`. Es hat keine Abhängigkeiten zu Repositories, Services, oder anderen Schichten. Die `withNewReview()`-Methode gibt eine neue Instanz zurück (Immutability), was die Kopplung weiter reduziert: keine Seiteneffekte durch geteilten Zustand.
 
-The `DeckMenu` class is tightly coupled to concrete algorithm implementations (`RandomRepetitionAlgorithm`, `SpacedRepetitionAlgorithm`). Adding or removing an algorithm requires changes in `DeckMenu`, which is an adapter-layer class that should ideally be decoupled from infrastructure details.
+#### Negativ-Beispiel: DeckMenu
 
-### 4.2 GRASP: High Cohesion
+```mermaid
+classDiagram
+    class DeckMenu {
+        -Scanner scanner
+        -CreateDeckUseCase createDeckUseCase
+        -ModifyDeckUseCase modifyDeckUseCase
+        -DeleteDeckUseCase deleteDeckUseCase
+        -CollectionRepository collectionRepository
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -DeckStatsObserver statsObserver
+        -MenuHelper menuHelper
+    }
+    DeckMenu --> CreateDeckUseCase
+    DeckMenu --> ModifyDeckUseCase
+    DeckMenu --> DeleteDeckUseCase
+    DeckMenu --> CollectionRepository
+    DeckMenu --> RandomRepetitionAlgorithm
+    DeckMenu --> SpacedRepetitionAlgorithm
+    DeckMenu --> DeckStatsObserver
+    DeckMenu --> MenuHelper
+```
 
-> Assign responsibilities so that cohesion remains high.
+**Aufgabe:** `DeckMenu` verwaltet das CLI-Menü für Deck-Operationen.
 
-**Positive Example:**
+**Begründung hohe Kopplung:** `DeckMenu` hat 9 Abhängigkeiten (8 injizierte + Scanner). Es ist an 3 Use Cases, 2 konkrete Algorithmen, 1 Repository, 1 Observer und 1 Helper gekoppelt. Das Hinzufügen oder Ändern eines Algorithmus erfordert Änderungen in `DeckMenu`. **Auflösung:** Die Algorithmus-Auswahl in eine eigene `AlgorithmSelector`-Klasse extrahieren und die konkreten Typen durch eine `List<RepetitionAlgorithm>` ersetzen würde die Kopplung von 9 auf 7 Abhängigkeiten reduzieren und die konkrete Plugin-Abhängigkeit entfernen.
 
-Each use case class is highly cohesive: it encapsulates exactly one business operation with all the steps needed to complete it. `CreateCardUseCase` validates the deck exists, creates the card, saves it, adds it to the deck, and saves the deck. All methods in this class serve the single purpose of card creation.
+### Analyse GRASP: Hohe Kohäsion
 
-**Positive Example:**
+#### Positiv-Beispiel: CardContent
 
-The `CardStats` value object (`src/main/java/com/cardrep/domain/model/CardStats.java`) groups all review-related data and behavior together: review history, total reviews count, last difficulty, and last review time. Everything in the class relates to the concept of "card review statistics."
+```mermaid
+classDiagram
+    class CardContent {
+        -String text
+        -String imagePath
+        +getText() String
+        +getImagePath() String
+        +hasImage() boolean
+        +equals(o) boolean
+        +hashCode() int
+        +toString() String
+    }
+```
 
-### 4.3 DRY: Don't Repeat Yourself
+**Begründung:** `CardContent` (`src/main/java/com/cardrep/domain/model/CardContent.java`) ist maximal kohäsiv: alle Felder (`text`, `imagePath`) und alle Methoden (`getText()`, `getImagePath()`, `hasImage()`) dienen ausschließlich dem Konzept "Karteninhalt". Es gibt keine Methode, die nichts mit dem Textinhalt zu tun hat. Die Klasse ist immutable (alle Felder `final`), was die Kohäsion weiter stärkt: jede Instanz repräsentiert genau einen konsistenten Zustand.
 
-> Every piece of knowledge must have a single, unambiguous, authoritative representation.
+#### Negativ-Beispiel: DeckMenu
 
-**Before Refactoring (Violation):**
+```mermaid
+classDiagram
+    class DeckMenu {
+        -Scanner scanner
+        -CreateDeckUseCase createDeckUseCase
+        -ModifyDeckUseCase modifyDeckUseCase
+        -DeleteDeckUseCase deleteDeckUseCase
+        -CollectionRepository collectionRepository
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -DeckStatsObserver statsObserver
+        -MenuHelper menuHelper
+        +run() void
+        -createDeck() void
+        -modifyDeck() void
+        -deleteDeck() void
+        -viewDeckStats() void
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+```
 
-The `selectDeck()` method was duplicated in `CardMenu` and `LearningSession`. Similarly, `selectCollection()` was duplicated in `DeckMenu` and `CollectionMenu`. Each copy had the same logic: fetch items from a repository, display a numbered list, parse user input, and return the selected ID.
+**Begründung:** `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java`) hat niedrige Kohäsion: seine Methoden bedienen vier verschiedene funktionale Bereiche: (1) Deck-CRUD (`createDeck`, `modifyDeck`, `deleteDeck`), (2) Algorithmus-Auswahl (`selectAlgorithm`), (3) Statistik-Anzeige (`viewDeckStats`), (4) User-Input-Parsing. Nicht alle Felder werden von allen Methoden genutzt: z.B. `randomAlgorithm` und `spacedAlgorithm` werden nur von `selectAlgorithm()` verwendet, `statsObserver` nur von `createDeck()`. Die geringe Überlappung der Feld-Nutzung zwischen Methoden ist ein Indikator für niedrige Kohäsion. **Auflösung:** `selectAlgorithm()` und die zugehörigen Felder in eine eigene `AlgorithmSelector`-Klasse extrahieren würde die Kohäsion der verbleibenden `DeckMenu`-Klasse erhöhen.
+
+### Don't Repeat Yourself (DRY)
+
+**Commit:** `aafecbc` (Refactoring: Extract MenuHelper to eliminate duplicated selection logic)
+
+**Vorher (CardMenu.java)**: duplizierte `selectDeck()`-Methode:
 
 ```java
-// CardMenu.java (before): duplicated selectDeck()
 private String selectDeck() {
     List<Deck> decks = deckRepository.findAll();
-    if (decks.isEmpty()) { ... }
+    if (decks.isEmpty()) {
+        System.out.println("No decks available. Create a deck first.");
+        return null;
+    }
+    System.out.println("\nAvailable decks:");
     for (int i = 0; i < decks.size(); i++) {
         System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
     }
-    // ... parse input, return ID
-}
-
-// LearningSession.java (before): nearly identical selectDeck()
-private String selectDeck() {
-    List<Deck> decks = deckRepository.findAll();
-    if (decks.isEmpty()) { ... }
-    for (int i = 0; i < decks.size(); i++) {
-        System.out.println("  " + (i + 1) + ". " + deck.getName() + " (" + deck.getCards().size() + " cards)");
+    System.out.print("Select deck (number): ");
+    try {
+        int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
+        if (index < 0 || index >= decks.size()) {
+            System.out.println("Invalid selection.");
+            return null;
+        }
+        return decks.get(index).getId();
+    } catch (NumberFormatException e) {
+        System.out.println("Invalid input.");
+        return null;
     }
-    // ... parse input, return ID
 }
 ```
 
-**After Refactoring (DRY Applied):**
+Die gleiche Logik war in `CardMenu` und `LearningSession` dupliziert. Ebenso war `selectCollection()` in `DeckMenu` und `CollectionMenu` dupliziert.
 
-The duplicated logic was extracted into `MenuHelper` (`src/main/java/com/cardrep/adapter/cli/MenuHelper.java`), which provides a generic `selectFromList()` method using Java generics and `Function` parameters. The specific `selectDeck()`, `selectCollection()`, etc. are now single methods in `MenuHelper` that delegate to this generic helper. All menu classes share the same `MenuHelper` instance.
+**Nachher (MenuHelper.java)**: generische Methode:
 
-See commit `95a622a` for this refactoring.
+```java
+public <T> String selectFromList(List<T> items, String header,
+                                 Function<T, String> displayFunc,
+                                 Function<T, String> idFunc) {
+    if (items.isEmpty()) {
+        System.out.println("No items available.");
+        return null;
+    }
+    System.out.println("\n" + header + ":");
+    for (int i = 0; i < items.size(); i++) {
+        System.out.println("  " + (i + 1) + ". " + displayFunc.apply(items.get(i)));
+    }
+    System.out.print("Select (number): ");
+    try {
+        int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
+        if (index < 0 || index >= items.size()) {
+            System.out.println("Invalid selection.");
+            return null;
+        }
+        return idFunc.apply(items.get(index));
+    } catch (NumberFormatException e) {
+        System.out.println("Invalid input.");
+        return null;
+    }
+}
+```
+
+**Auswirkung:** 4 Klassen delegieren jetzt an `MenuHelper`. Die generische `selectFromList()`-Methode kann für jede zukünftige Listen-Auswahl wiederverwendet werden. Netto-Änderung: +190 Zeilen (neue Datei), -208 Zeilen (entfernter Code) = **18 Zeilen weniger** bei besserer Struktur.
 
 ---
 
-## 5. Unit Tests
+## Kapitel 5: Unit Tests
 
-### Overview
+### 10 Unit Tests
 
-The project contains **61 unit tests** across 8 test classes covering the domain, application, and infrastructure layers.
+| # | Unit Test | Beschreibung |
+|---|-----------|-------------|
+| 1 | `CardTest#createCard_withValidContent_shouldSucceed` | Testet erfolgreiche Karten-Erstellung mit gültigem Front/Back-Content |
+| 2 | `CardTest#createCard_withNullFront_shouldThrow` | Testet, dass null-Front eine Exception wirft |
+| 3 | `DeckTest#addCard_duplicateId_shouldThrow` | Testet, dass doppeltes Hinzufügen einer Karte (gleiche ID) eine Exception wirft |
+| 4 | `DeckTest#computeStats_withReviewedCards_shouldAggregateCorrectly` | Testet korrekte Aggregation von DeckStats nach Reviews |
+| 5 | `DeckTest#observer_shouldBeNotifiedOnCardAdd` | Testet, dass Observer bei `addCard()` benachrichtigt werden |
+| 6 | `CollectionTest#addChildCollection_withDuplicateName_shouldThrow` | Testet Business-Regel: eindeutige Namen innerhalb einer Collection |
+| 7 | `CardUseCaseTest#createCard_shouldSaveCardAndAddToDeck` | Testet Use-Case-Orchestrierung: Karte wird gespeichert UND zum Deck hinzugefügt |
+| 8 | `DeckUseCaseTest#deleteDeck_shouldDeleteAllCardsAndDeck` | Testet Cascade-Delete: alle Karten und das Deck werden entfernt |
+| 9 | `InMemoryCardRepositoryTest#save_shouldStoreCard` | Testet, dass die Fake-Implementierung korrekt speichert |
+| 10 | `RepetitionAlgorithmTest#spacedRepetition_shouldPrioritizeUnreviewedCards` | Testet, dass ungeprüfte Karten bevorzugt werden |
 
-| Test Class | Tests | Layer | Approach |
-|------------|-------|-------|----------|
-| `CardTest` | 8 | Domain | Direct instantiation |
-| `CardContentTest` | 8 | Domain | Direct instantiation |
-| `DeckTest` | 13 | Domain | Direct instantiation + fakes |
-| `CollectionTest` | 7 | Domain | Direct instantiation |
-| `CardUseCaseTest` | 5 | Application | Mockito mocks |
-| `DeckUseCaseTest` | 6 | Application | Mockito mocks |
-| `InMemoryCardRepositoryTest` | 6 | Infrastructure | Fake (real implementation) |
-| `RepetitionAlgorithmTest` | 8 | Infrastructure | Seeded Random for determinism |
+### ATRIP: Automatic
 
-### ATRIP Qualities
+Alle Tests laufen automatisch via `mvn test` ohne manuelle Intervention. JUnit 5 entdeckt und führt alle Tests aus. JaCoCo generiert Coverage-Reports automatisch. Keine manuellen Schritte, keine UI-Interaktion, keine Datenbank-Setup erforderlich: die In-Memory-Repositories starten leer und brauchen keine Konfiguration.
 
-The tests follow the **ATRIP** qualities:
+### ATRIP: Repeatable
 
-- **Automatic:** All tests run automatically via `mvn test` with no manual intervention. JUnit 5 discovers and executes all tests. JaCoCo generates coverage reports automatically.
+Jeder Test liefert bei jedem Lauf dasselbe Ergebnis, unabhängig von Umgebung oder Zeitpunkt. Dies wird erreicht durch:
 
-- **Thorough:** Tests cover both happy paths and edge cases. For example, `CardTest` tests valid creation, null front/back rejection, blank text rejection, review recording, and difficulty tracking. `DeckTest` covers adding cards, duplicate card rejection, removing nonexistent cards, empty deck behavior, stats computation, and observer notification.
+- **In-Memory-Repositories:** Kein externer Zustand (Datenbank, Dateisystem). Jeder Test startet mit einem frischen, leeren Repository via `@BeforeEach`.
+- **Deterministische Algorithmen im Test:** `RandomRepetitionAlgorithm` akzeptiert ein `Random`-Objekt mit festem Seed, sodass auch randomisierte Logik reproduzierbar getestet werden kann.
+- **Keine Zeitabhängigkeit in Assertions:** Tests prüfen strukturelle Eigenschaften (z.B. "Karte wurde hinzugefügt") statt zeitabhängiger Werte.
+- **Keine Netzwerk- oder I/O-Abhängigkeiten:** Alle Tests laufen vollständig in-process ohne externe Dienste.
 
-- **Repeatable:** Tests produce the same result on every run. The `RepetitionAlgorithmTest` uses `new Random(42)` (a seeded random) to make the `RandomRepetitionAlgorithm` deterministic. No tests depend on external state, timing, or order.
+### ATRIP: Independent
 
-- **Independent:** Each test method is self-contained with its own setup. `@BeforeEach` creates fresh instances for every test. Tests do not depend on execution order and do not share mutable state.
+Jeder Test ist unabhängig von anderen Tests und kann in beliebiger Reihenfolge ausgeführt werden:
 
-- **Professional:** Tests follow naming conventions (`methodName_condition_expectedResult`), use clear assertions with descriptive messages, and are organized by layer. Test code follows the same quality standards as production code.
+- **Eigenes `@BeforeEach`-Setup:** Jede Testklasse erstellt in `setUp()` frische Instanzen aller benötigten Objekte. Kein Test erbt Zustand von einem vorherigen Test.
+- **Keine gemeinsamen statischen Felder:** Alle Test-Fixtures sind Instanzvariablen, keine `static`-Felder.
+- **Frische Mocks pro Test:** Mockito's `@ExtendWith(MockitoExtension.class)` erstellt für jeden Test neue Mock-Instanzen. Verifizierungen eines Tests beeinflussen andere nicht.
+- **Keine festgelegte Ausführungsreihenfolge:** Kein `@Order` oder `@TestMethodOrder` verwendet. JUnit 5 kann Tests in beliebiger Reihenfolge ausführen.
 
-### Mocks vs. Fakes
+### ATRIP: Thorough
 
-**Mocks (Mockito):** Used in `CardUseCaseTest` and `DeckUseCaseTest` to isolate use cases from repository implementations. Mockito's `@Mock` annotation creates mock repositories, and `when(...).thenReturn(...)` defines expected behavior. `verify(...)` checks that the correct repository methods were called.
+**Positiv-Beispiel:** `DeckTest` (13 Tests)
 
 ```java
-// DeckUseCaseTest.java: Mock example
-@Mock private DeckRepository deckRepository;
+@Test
+void addCard_duplicateId_shouldThrow() {
+    deck.addCard(card);
+    assertThrows(IllegalArgumentException.class, () -> deck.addCard(card));
+}
+
+@Test
+void removeCard_nonExistentCard_shouldThrow() {
+    assertThrows(IllegalArgumentException.class,
+        () -> deck.removeCard("non-existent-id"));
+}
+
+@Test
+void getNextCard_emptyDeck_shouldReturnNull() {
+    assertNull(deck.getNextCard());
+}
+```
+
+**Analyse:** `DeckTest` testet sowohl Happy Paths (addCard, removeCard, computeStats) als auch Edge Cases (doppelte Karte, nicht existente Karte, leeres Deck, null-Parameter). Alle Grenzfälle der Geschäftslogik sind abgedeckt.
+
+**Negativ-Beispiel:** `InMemoryCardRepositoryTest` (6 Tests)
+
+```java
+@Test
+void deleteById_shouldRemoveCard() {
+    repository.save(card);
+    repository.deleteById(card.getId());
+    assertFalse(repository.existsById(card.getId()));
+}
+```
+
+**Analyse:** Es fehlt ein Test für `deleteById()` mit einer nicht existierenden ID: das Verhalten bei ungültiger ID wird nicht getestet. Ebenso fehlt ein Test für `save()` mit einer bereits existierenden Karte (Update-Verhalten). Die Tests decken nur den Standard-Pfad ab.
+
+### ATRIP: Professional
+
+**Positiv-Beispiel:** `CardUseCaseTest`
+
+```java
+@Test
+void createCard_shouldSaveCardAndAddToDeck() {
+    when(deckRepository.findById(deck.getId())).thenReturn(Optional.of(deck));
+    when(cardRepository.save(any(Card.class))).thenAnswer(i -> i.getArgument(0));
+
+    Card result = createCardUseCase.execute(deck.getId(), front, back);
+
+    assertNotNull(result);
+    assertEquals(front, result.getFront());
+    verify(cardRepository).save(any(Card.class));
+    verify(deckRepository).save(deck);
+}
+```
+
+**Analyse:** Professionell: sprechende Methodennamen (`methodName_condition_expectedResult`), klares Arrange-Act-Assert-Muster, gezielte Verifizierung der Interaktionen, eigene `@BeforeEach`-Setup pro Test.
+
+**Negativ-Beispiel:** `RepetitionAlgorithmTest`
+
+```java
+@Test
+void randomRepetition_shouldReturnACard() {
+    Card result = randomAlgorithm.selectNextCard(cards);
+    assertNotNull(result);
+    assertTrue(cards.contains(result));
+}
+```
+
+**Analyse:** Weniger professionell: der Testname `shouldReturnACard` ist vage: er beschreibt nicht die Vorbedingung oder das erwartete Ergebnis präzise genug. Besser wäre: `selectNextCard_withMultipleCards_shouldReturnCardFromList`. Außerdem testet er nur dass *irgendeine* Karte zurückgegeben wird, nicht ob die Verteilung korrekt ist.
+
+### Code Coverage
+
+Coverage wird via **JaCoCo** gemessen (`mvn test jacoco:report`). Die Domain- und Application-Schichten haben die höchste Coverage, da sie die Kerngeschäftslogik enthalten und am gründlichsten getestet sind. Die Adapter-Schicht (CLI) hat niedrigere Coverage, da sie primär User-I/O verarbeitet, was manuell getestet wird. Insgesamt sind **61 Tests** vorhanden, die die wichtigsten Geschäftsregeln und Edge Cases abdecken.
+
+### Fakes und Mocks
+
+#### Mock: CardRepository in CardUseCaseTest
+
+```mermaid
+classDiagram
+    class CardUseCaseTest {
+        -CardRepository cardRepository
+        -DeckRepository deckRepository
+        -CreateCardUseCase createCardUseCase
+        +createCard_shouldSaveCardAndAddToDeck()
+    }
+    class CardRepository {
+        <<interface>>
+        <<mock>>
+        +save(card) Card
+        +findById(id) Optional~Card~
+    }
+    class DeckRepository {
+        <<interface>>
+        <<mock>>
+        +findById(id) Optional~Deck~
+        +save(deck) Deck
+    }
+    CardUseCaseTest --> CardRepository : @Mock
+    CardUseCaseTest --> DeckRepository : @Mock
+```
+
+**Analyse:** Mockito-Mocks werden verwendet, um die Use Cases isoliert von der Persistenz zu testen. `when(...).thenReturn(...)` definiert erwartetes Verhalten, `verify(...)` prüft, dass die korrekten Repository-Methoden aufgerufen wurden. Vorteil: Der Test ist schnell, deterministisch, und unabhängig von der Implementierung.
+
+```java
 @Mock private CardRepository cardRepository;
+@Mock private DeckRepository deckRepository;
 
 @Test
 void deleteDeck_shouldDeleteAllCardsAndDeck() {
     when(deckRepository.findById(deck.getId())).thenReturn(Optional.of(deck));
     deleteDeckUseCase.execute(deck.getId(), collectionId);
-    verify(cardRepository).deleteById(card1.getId());  // verify interaction
+    verify(cardRepository).deleteById(card1.getId());  // Interaktion verifizieren
 }
 ```
 
-**Fakes (Real Implementation):** Used in `InMemoryCardRepositoryTest`, which tests the actual `InMemoryCardRepository`: a real, working in-memory implementation (HashMap-backed). This is a fake rather than a mock because it has real behavior and state. Also used in `RepetitionAlgorithmTest` where real algorithm implementations are tested with seeded `Random` for determinism.
+#### Fake: InMemoryCardRepository in InMemoryCardRepositoryTest
+
+```mermaid
+classDiagram
+    class InMemoryCardRepositoryTest {
+        -InMemoryCardRepository repository
+        +save_shouldStoreCard()
+        +findById_existingCard_shouldReturnCard()
+    }
+    class InMemoryCardRepository {
+        -Map~String, Card~ cards
+        +save(card) Card
+        +findById(id) Optional~Card~
+        +findAll() List~Card~
+        +deleteById(id) void
+    }
+    class CardRepository {
+        <<interface>>
+    }
+    InMemoryCardRepositoryTest --> InMemoryCardRepository : uses fake
+    InMemoryCardRepository ..|> CardRepository
+```
+
+**Analyse:** `InMemoryCardRepository` ist ein **Fake**: eine echte, funktionierende Implementierung (HashMap-basiert) des `CardRepository`-Interfaces. Im Gegensatz zu einem Mock hat es echtes Verhalten und echten Zustand. Es wird in Tests verwendet, um die Korrektheit der Implementierung selbst zu verifizieren, und dient im Produktionscode als leichtgewichtige Persistenz.
 
 ```java
-// InMemoryCardRepositoryTest.java: Fake example
 private InMemoryCardRepository repository;
 
 @BeforeEach
 void setUp() {
-    repository = new InMemoryCardRepository();  // real implementation, not a mock
+    repository = new InMemoryCardRepository();  // Echte Implementierung, kein Mock
+}
+
+@Test
+void save_shouldStoreCard() {
+    repository.save(card);
+    assertTrue(repository.existsById(card.getId()));
 }
 ```
 
-### Code Coverage
-
-Coverage is measured via **JaCoCo**. The domain and application layers have the highest coverage since they contain the core business logic and are tested most thoroughly. The adapter (CLI) layer has lower coverage because it primarily handles user I/O, which is tested manually. Run `mvn test jacoco:report` and open `target/site/jacoco/index.html` for the full report.
-
 ---
 
-## 6. Domain-Driven Design
+## Kapitel 6: Domain Driven Design
 
 ### Ubiquitous Language
 
-The project uses a documented **Ubiquitous Language** (see `ubiquoutous_language.md`) that defines all domain terms. These terms are used consistently throughout the codebase: in class names, method names, variable names, and comments:
-
-| Domain Term | Java Representation | Type |
-|-------------|-------------------|------|
-| Collection | `Collection.java` | Entity / Aggregate Root |
-| Deck | `Deck.java` | Entity / Aggregate Root |
-| Card | `Card.java` | Entity |
-| CardFront / CardBack | `CardContent.java` (used for both) | Value Object |
-| CardContent | `CardContent.java` | Value Object |
-| CardStats | `CardStats.java` | Value Object |
-| DeckStats | `DeckStats.java` | Value Object |
-| Difficulty | `Difficulty.java` (enum) | Value Object |
-| RootCollection | `RootCollection.java` | Entity |
-| Repetition Algorithm | `RepetitionAlgorithm.java` | Domain Service Interface |
-| User | Implicit (single-user app) |: |
+| Bezeichnung | Bedeutung | Begründung |
+|-------------|-----------|------------|
+| **Card** | Eine Lernkarte mit Vorderseite (Frage) und Rückseite (Antwort), die Review-Statistiken trackt | Zentrales Domänenkonzept: jeder Benutzer interagiert mit Karten beim Lernen. Direkt als Java-Klasse `Card` im Code |
+| **Deck** | Eine Sammlung von Karten mit einem konfigurierbaren Wiederholungsalgorithmus | Organisationseinheit für Karten: ein Deck wird als Ganzes gelernt. Eigenständiges Aggregate Root im Code |
+| **Difficulty** | Die vom Benutzer wahrgenommene Schwierigkeit einer Karte (EASY, MEDIUM, HARD, AGAIN) | Bestimmt die Wiederholungsfrequenz: ist der zentrale Input des Spaced-Repetition-Systems. Als Enum `Difficulty` implementiert |
+| **Collection** | Ein hierarchischer Ordner, der Decks und weitere Collections enthält | Ermöglicht beliebig tiefe Organisationsstrukturen (z.B. "Informatik > Algorithmen > Sortierung"). Als Baum-Struktur mit Rekursion implementiert |
 
 ### Entities
 
-Entities are objects with a unique identity that persists across state changes. They use identity-based `equals()` and `hashCode()`.
+#### Card
 
-- **Card** (`src/main/java/com/cardrep/domain/model/Card.java`): identified by UUID. Content can change via `modify()`, stats change via `recordReview()`, but the identity remains the same.
-- **Deck** (`src/main/java/com/cardrep/domain/model/Deck.java`): identified by UUID. Owns a mutable list of cards and a configurable algorithm.
-- **Collection** (`src/main/java/com/cardrep/domain/model/Collection.java`): identified by UUID. Contains child collections and decks (tree structure).
+```mermaid
+classDiagram
+    class Card {
+        -String id
+        -CardContent front
+        -CardContent back
+        -CardStats stats
+        +modify(newFront, newBack) void
+        +recordReview(difficulty) void
+        +equals(o) boolean
+        +hashCode() int
+    }
+```
+
+**Beschreibung:** `Card` (`src/main/java/com/cardrep/domain/model/Card.java`) repräsentiert eine Lernkarte mit eindeutiger UUID-Identität. Der Inhalt (front/back) kann sich über `modify()` ändern, Statistiken ändern sich über `recordReview()`, aber die Identität bleibt gleich.
+
+**Begründung:** Card ist eine Entity, weil sie eine **eindeutige Identität** besitzt, die über ihren Lebenszyklus hinweg bestehen bleibt. Zwei Karten mit identischem Text sind trotzdem verschiedene Karten (unterschiedliche IDs, unterschiedliche Statistiken). `equals()` und `hashCode()` basieren ausschließlich auf der ID.
 
 ### Value Objects
 
-Value Objects have no identity and are defined by their attributes. They are immutable.
+#### CardContent
 
-- **CardContent**: text + optional image path. Two `CardContent` instances with the same text and image are equal.
-- **CardStats**: review history with `withNewReview()` returning a new instance (functional immutability).
-- **DeckStats**: aggregated statistics. All fields are `final`, no setters.
-- **Difficulty**: enum with four values: `EASY`, `MEDIUM`, `HARD`, `AGAIN`.
+```mermaid
+classDiagram
+    class CardContent {
+        -String text
+        -String imagePath
+        +getText() String
+        +getImagePath() String
+        +hasImage() boolean
+        +equals(o) boolean
+        +hashCode() int
+    }
+    note for CardContent "Immutable: all fields final, no setters. Equality by value (text + imagePath)."
+```
 
-### Aggregates
+**Beschreibung:** `CardContent` (`src/main/java/com/cardrep/domain/model/CardContent.java`) repräsentiert den Textinhalt (plus optionalem Bild) einer Kartenseite.
 
-- **Deck** is an Aggregate Root that owns its Cards. As defined in the ubiquitous language: *"a card has to belong to at least one deck"* and *"when a deck is deleted all of its child Cards will be deleted as well."*
-- **Collection** is an Aggregate Root that owns child Collections and Decks. It enforces the business invariant that names must be unique within a parent (case-insensitive).
+**Begründung:** CardContent ist ein Value Object, weil es **keine eigene Identität** besitzt: zwei `CardContent`-Instanzen mit gleichem Text und gleichem Bildpfad sind vollständig austauschbar (gleich im Sinne von `equals()`). Es ist immutable (alle Felder `final`, keine Setter), und wird über seine Attribute definiert, nicht über eine ID.
 
 ### Repositories
 
-Repository interfaces are defined in the domain layer, following DDD's principle that the domain defines the contracts for persistence:
+#### CardRepository
 
-- `CardRepository`: CRUD for cards
-- `DeckRepository`: CRUD for decks
-- `CollectionRepository`: save, find, delete, plus `getRootCollection()`
+```mermaid
+classDiagram
+    class CardRepository {
+        <<interface>>
+        +save(card) Card
+        +findById(id) Optional~Card~
+        +findAll() List~Card~
+        +deleteById(id) void
+        +existsById(id) boolean
+    }
+    class InMemoryCardRepository {
+        -Map~String, Card~ cards
+        +save(card) Card
+        +findById(id) Optional~Card~
+        +findAll() List~Card~
+        +deleteById(id) void
+        +existsById(id) boolean
+    }
+    CardRepository <|.. InMemoryCardRepository
+```
 
-Implementations (`InMemoryCardRepository`, etc.) are in the infrastructure layer, keeping the domain free of persistence technology details.
+**Beschreibung:** `CardRepository` (`src/main/java/com/cardrep/domain/repository/CardRepository.java`) definiert den Vertrag für die Persistenz von Cards. Die Implementierung `InMemoryCardRepository` nutzt eine HashMap.
+
+**Begründung:** Repositories sind der DDD-Mechanismus, um die Domain von Persistenzdetails zu entkoppeln. Das Interface ist in der Domain-Schicht definiert (Dependency Inversion), die Implementierung in der Plugin-Schicht. So kann die Speichertechnologie gewechselt werden (z.B. zu einer Datenbank), ohne die Domain oder Application-Schicht zu ändern.
+
+### Aggregates
+
+#### Deck (Aggregate Root)
+
+```mermaid
+classDiagram
+    class Deck {
+        -String id
+        -String name
+        -List~Card~ cards
+        +addCard(card) void
+        +removeCard(cardId) void
+        +getNextCard() Card
+        +computeStats() DeckStats
+    }
+    class Card {
+        -String id
+        -CardContent front
+        -CardContent back
+        -CardStats stats
+    }
+    Deck *-- Card : owns (cascade delete)
+    note for Deck "Aggregate Root: controls access to Cards. Invariant: no duplicate card IDs."
+```
+
+**Beschreibung:** `Deck` ist Aggregate Root und kontrolliert den Zugriff auf seine `Card`-Objekte. Definiert in der Ubiquitous Language: *"Eine Karte muss zu genau einem Deck gehören"* und *"Wenn ein Deck gelöscht wird, werden alle zugehörigen Karten ebenfalls gelöscht."*
+
+**Begründung:** Deck ist ein Aggregate, weil es eine **Konsistenzgrenze** definiert: Karten können nur über das Deck hinzugefügt/entfernt werden, nicht direkt. Das Deck erzwingt Invarianten (keine doppelten Card-IDs) und garantiert kaskadierendes Löschen. External Entities referenzieren Cards nur über das Deck, was transaktionale Konsistenz sichert.
 
 ---
 
-## 7. Refactoring
+## Kapitel 7: Refactoring
 
-### Refactoring 1: Extract Class: MenuHelper (DRY)
+### Code Smells
 
-**Commit:** `95a622a`
+#### Code Smell 1: Duplicated Code (selectDeck in CardMenu und LearningSession)
 
-**Problem:** The `selectDeck()` method was duplicated in `CardMenu` and `LearningSession`. The `selectCollection()` method was duplicated in `DeckMenu` and `CollectionMenu`. Each copy followed the same pattern: fetch a list, display it numbered, parse user input, return the selected ID. This violated the DRY principle: approximately 120 lines of duplicated code across 4 classes.
+**Code-Beispiel (CardMenu.java, vor Refactoring):**
 
-**UML Class Diagram (Before: duplicated methods):**
+```java
+private String selectDeck() {
+    List<Deck> decks = deckRepository.findAll();
+    if (decks.isEmpty()) {
+        System.out.println("No decks available. Create a deck first.");
+        return null;
+    }
+    System.out.println("\nAvailable decks:");
+    for (int i = 0; i < decks.size(); i++) {
+        System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
+    }
+    System.out.print("Select deck (number): ");
+    // ... parsing logic
+}
+```
+
+Nahezu identischer Code existierte in `LearningSession.java`. Ebenso war `selectCollection()` in `DeckMenu` und `CollectionMenu` dupliziert.
+
+**Lösungsweg:** Extract Class: alle Selektions-Methoden wurden in eine neue Klasse `MenuHelper` zentralisiert. Eine generische `selectFromList()`-Methode nutzt Java Generics und `Function`-Parameter, um für jede Entity-Auswahl wiederverwendbar zu sein.
+
+#### Code Smell 2: Long Method (Deck.computeStats)
+
+**Code-Beispiel (Deck.java, vor Refactoring):**
+
+```java
+public DeckStats computeStats() {
+    int total = cards.size();
+    int reviewed = 0;
+    int easy = 0, medium = 0, hard = 0, failed = 0;
+    for (Card card : cards) {
+        if (card.getStats().hasBeenReviewed()) {
+            reviewed++;
+            Difficulty lastDifficulty = card.getStats().getLastDifficulty();
+            if (lastDifficulty == Difficulty.EASY) easy++;
+            else if (lastDifficulty == Difficulty.MEDIUM) medium++;
+            else if (lastDifficulty == Difficulty.HARD) hard++;
+            else if (lastDifficulty == Difficulty.AGAIN) failed++;
+        }
+    }
+    return new DeckStats(total, reviewed, easy, medium, hard, failed);
+}
+```
+
+Die Methode mischt Filterlogik (welche Karten wurden reviewed?) mit Zähllogik (Kategorisierung nach Difficulty) in einer einzigen Schleife mit verschachtelten if-else-Ketten.
+
+**Lösungsweg:** Extract Method: Aufteilen in `getReviewedCards()` (filtert reviewed Karten) und `countByLastDifficulty(cards, difficulty)` (zählt Karten nach Schwierigkeit). Jede Methode hat eine einzige Verantwortlichkeit, die deklarative Stream-basierte Lösung ersetzt die imperative Schleife.
+
+### 2 Refactorings
+
+#### Refactoring 1: Extract Class: MenuHelper (DRY)
+
+**Commit:** `aafecbc`
+
+**Problem:** `selectDeck()` war in `CardMenu` und `LearningSession` dupliziert. `selectCollection()` war in `DeckMenu` und `CollectionMenu` dupliziert. Ca. 120 Zeilen duplizierter Code über 4 Klassen.
+
+**UML Class Diagram (Vorher: duplizierte Methoden):**
 
 ```mermaid
 classDiagram
@@ -415,35 +1154,7 @@ classDiagram
     note for CollectionMenu "Duplicated selectCollection()"
 ```
 
-**Before (CardMenu.java):**
-```java
-private String selectDeck() {
-    List<Deck> decks = deckRepository.findAll();
-    if (decks.isEmpty()) {
-        System.out.println("No decks available. Create a deck first.");
-        return null;
-    }
-    System.out.println("\nAvailable decks:");
-    for (int i = 0; i < decks.size(); i++) {
-        System.out.println("  " + (i + 1) + ". " + decks.get(i).getName());
-    }
-    System.out.print("Select deck (number): ");
-    try {
-        int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-        if (index < 0 || index >= decks.size()) {
-            System.out.println("Invalid selection.");
-            return null;
-        }
-        return decks.get(index).getId();
-    } catch (NumberFormatException e) {
-        System.out.println("Invalid input.");
-        return null;
-    }
-}
-```
-
-
-**UML Class Diagram (After: extracted MenuHelper):**
+**UML Class Diagram (Nachher: extrahierte MenuHelper):**
 
 ```mermaid
 classDiagram
@@ -473,54 +1184,15 @@ classDiagram
     CollectionMenu --> MenuHelper : delegates
 ```
 
-**After (MenuHelper.java):**
-```java
-public <T> String selectFromList(List<T> items, String header,
-                                 Function<T, String> displayFunc,
-                                 Function<T, String> idFunc) {
-    if (items.isEmpty()) {
-        System.out.println("No items available.");
-        return null;
-    }
-    System.out.println("\n" + header + ":");
-    for (int i = 0; i < items.size(); i++) {
-        System.out.println("  " + (i + 1) + ". " + displayFunc.apply(items.get(i)));
-    }
-    System.out.print("Select (number): ");
-    try {
-        int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-        if (index < 0 || index >= items.size()) {
-            System.out.println("Invalid selection.");
-            return null;
-        }
-        return idFunc.apply(items.get(index));
-    } catch (NumberFormatException e) {
-        System.out.println("Invalid input.");
-        return null;
-    }
-}
+**Begründung:** DRY-Prinzip verletzt. Die generische `selectFromList()`-Methode nutzt Java Generics und `Function`-Parameter, um für jede Entity-Auswahl wiederverwendbar zu sein.
 
-public String selectDeck() {
-    List<Deck> decks = deckRepository.findAll();
-    if (decks.isEmpty()) {
-        System.out.println("No decks available. Create a deck first.");
-        return null;
-    }
-    return selectFromList(decks, "Available decks",
-            deck -> deck.getName() + " (" + deck.getCards().size() + " cards)",
-            Deck::getId);
-}
-```
+#### Refactoring 2: Extract Method: Deck.computeStats()
 
-**Result:** 4 classes now delegate to `MenuHelper`. The generic `selectFromList()` method can be reused for any future list-based selection. Net change: +190 lines (new file), -208 lines (removed duplication) = **18 fewer lines overall** with better structure.
+**Commit:** `aafecbc`
 
-### Refactoring 2: Extract Method: Deck.computeStats()
+**Problem:** `computeStats()` war eine monolithische Methode mit Schleife und verschachtelten if-else-Ketten. Sie mischte Filterlogik mit Zähllogik.
 
-**Commit:** `7c1afb9`
-
-**Problem:** The `computeStats()` method in `Deck` was a single monolithic method with a loop containing nested if-else chains for counting cards by difficulty. It mixed filtering logic (which cards are reviewed) with counting logic (categorizing by difficulty).
-
-**UML Class Diagram (Before: monolithic method):**
+**UML Class Diagram (Vorher: monolithische Methode):**
 
 ```mermaid
 classDiagram
@@ -531,7 +1203,8 @@ classDiagram
     note for Deck "computeStats() contains all logic: filtering, counting by difficulty, building DeckStats"
 ```
 
-**Before (Deck.java):**
+**Vorher (Deck.java):**
+
 ```java
 public DeckStats computeStats() {
     int total = cards.size();
@@ -552,8 +1225,7 @@ public DeckStats computeStats() {
 }
 ```
 
-
-**UML Class Diagram (After: extracted methods):**
+**UML Class Diagram (Nachher: extrahierte Methoden):**
 
 ```mermaid
 classDiagram
@@ -566,7 +1238,8 @@ classDiagram
     note for Deck "computeStats() delegates to focused helper methods"
 ```
 
-**After (Deck.java):**
+**Nachher (Deck.java):**
+
 ```java
 public DeckStats computeStats() {
     int total = cards.size();
@@ -592,23 +1265,25 @@ private int countByLastDifficulty(List<Card> reviewedCards, Difficulty difficult
 }
 ```
 
-**Result:** The method is now composed of clearly named helper methods. `getReviewedCards()` handles filtering; `countByLastDifficulty()` handles categorization. Each method has a single responsibility and can be understood independently. The declarative stream-based approach replaces the imperative loop with mutable counters.
+**Begründung:** Jede Methode hat jetzt eine einzige Verantwortlichkeit: `getReviewedCards()` filtert, `countByLastDifficulty()` zählt. Die deklarative Stream-basierte Lösung ersetzt die imperative Schleife mit mutablen Zählern.
 
 ---
 
-## 8. Design Patterns
+## Kapitel 8: Entwurfsmuster
 
-### 8.1 Strategy Pattern: RepetitionAlgorithm
+### Entwurfsmuster: Strategy Pattern: RepetitionAlgorithm
 
-The **Strategy Pattern** allows the scheduling algorithm to be selected and swapped at runtime. Each deck can use a different algorithm without any changes to the `Deck` class itself.
+Das **Strategy Pattern** erlaubt es, den Scheduling-Algorithmus zur Laufzeit auszuwählen und zu wechseln. Jedes Deck kann einen anderen Algorithmus verwenden, ohne dass die `Deck`-Klasse selbst geändert werden muss.
+
+**Sinnvoller Einsatz:** Verschiedene Benutzer bevorzugen verschiedene Lernstrategien. Manche wollen zufällige Karten (zum Aufwärmen), andere wollen priorisierte Wiederholung (zum gezielten Lernen). Das Strategy Pattern ermöglicht diesen Wechsel ohne Code-Änderung.
 
 **Participants:**
 - **Strategy (Interface):** `RepetitionAlgorithm` (`src/main/java/com/cardrep/domain/service/RepetitionAlgorithm.java`)
-- **Concrete Strategy A:** `RandomRepetitionAlgorithm` (`src/main/java/com/cardrep/infrastructure/algorithm/RandomRepetitionAlgorithm.java`)
-- **Concrete Strategy B:** `SpacedRepetitionAlgorithm` (`src/main/java/com/cardrep/infrastructure/algorithm/SpacedRepetitionAlgorithm.java`)
+- **Concrete Strategy A:** `RandomRepetitionAlgorithm` (`src/main/java/com/cardrep/plugin/algorithm/RandomRepetitionAlgorithm.java`)
+- **Concrete Strategy B:** `SpacedRepetitionAlgorithm` (`src/main/java/com/cardrep/plugin/algorithm/SpacedRepetitionAlgorithm.java`)
 - **Context:** `Deck` (`src/main/java/com/cardrep/domain/model/Deck.java`)
 
-**UML Class Diagram (Before: without Strategy Pattern):**
+**UML Class Diagram (Vorher: ohne Strategy Pattern):**
 
 ```mermaid
 classDiagram
@@ -619,7 +1294,7 @@ classDiagram
     note for Deck "getNextCard() contains hardcoded if/else logic. Adding a new algorithm requires modifying this method."
 ```
 
-**UML Class Diagram (After: with Strategy Pattern):**
+**UML Class Diagram (Nachher: mit Strategy Pattern):**
 
 ```mermaid
 classDiagram
@@ -640,7 +1315,7 @@ classDiagram
     }
     class SpacedRepetitionAlgorithm {
         +selectNextCard(cards) Card
-        -calculatePriority(card) double
+        -calculatePriority(card) int
         +getName() String
     }
     Deck --> RepetitionAlgorithm : uses
@@ -648,24 +1323,26 @@ classDiagram
     RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
 ```
 
-**How it works:**
+**Funktionsweise:**
 
-1. When a `Deck` is created, a `RepetitionAlgorithm` is passed to it
-2. When the user starts a learning session, `Deck.getNextCard()` delegates to `repetitionAlgorithm.selectNextCard(cards)`
-3. The algorithm can be changed at runtime via `Deck.setRepetitionAlgorithm()`
-4. `RandomRepetitionAlgorithm` selects a random card from the list
-5. `SpacedRepetitionAlgorithm` selects the card with the lowest priority score (unreviewed cards first, then cards rated `AGAIN`, `HARD`, etc.)
+1. Bei der Deck-Erstellung wird ein `RepetitionAlgorithm` übergeben
+2. `Deck.getNextCard()` delegiert an `repetitionAlgorithm.selectNextCard(cards)`
+3. Der Algorithmus kann zur Laufzeit über `Deck.setRepetitionAlgorithm()` gewechselt werden
+4. `RandomRepetitionAlgorithm` wählt eine zufällige Karte
+5. `SpacedRepetitionAlgorithm` wählt die Karte mit der niedrigsten Priorität (ungeprüfte Karten zuerst, dann AGAIN > HARD > MEDIUM > EASY)
 
-### 8.2 Observer Pattern: DeckStatsObserver
+### Entwurfsmuster: Observer Pattern: DeckStatsObserver
 
-The **Observer Pattern** notifies interested parties whenever deck statistics change (e.g., when a card is added, removed, or reviewed). This decouples the notification logic from the core domain model.
+Das **Observer Pattern** benachrichtigt interessierte Parteien, wenn sich Deck-Statistiken ändern (z.B. wenn eine Karte hinzugefügt, entfernt oder reviewed wird). Dies entkoppelt die Benachrichtigungslogik vom Domänenmodell.
+
+**Sinnvoller Einsatz:** Das System muss bei Statistik-Änderungen reagieren (z.B. Logging, UI-Update, Persistenz), ohne dass das Deck alle Empfänger kennen muss. Neue Observer können hinzugefügt werden, ohne die Deck-Klasse zu ändern (OCP).
 
 **Participants:**
 - **Subject:** `Deck` (`src/main/java/com/cardrep/domain/model/Deck.java`)
 - **Observer (Interface):** `DeckStatsObserver` (`src/main/java/com/cardrep/domain/model/DeckStatsObserver.java`)
-- **Concrete Observer:** `DeckStatsLogger` (`src/main/java/com/cardrep/infrastructure/observer/DeckStatsLogger.java`)
+- **Concrete Observer:** `DeckStatsLogger` (`src/main/java/com/cardrep/plugin/observer/DeckStatsLogger.java`)
 
-**UML Class Diagram (Before: without Observer Pattern):**
+**UML Class Diagram (Vorher: ohne Observer Pattern):**
 
 ```mermaid
 classDiagram
@@ -682,7 +1359,7 @@ classDiagram
     note for Deck "Deck is tightly coupled to DeckStatsLogger. Adding new notification targets requires modifying Deck."
 ```
 
-**UML Class Diagram (After: with Observer Pattern):**
+**UML Class Diagram (Nachher: mit Observer Pattern):**
 
 ```mermaid
 classDiagram
@@ -705,11 +1382,11 @@ classDiagram
     DeckStatsObserver <|.. DeckStatsLogger
 ```
 
-**How it works:**
+**Funktionsweise:**
 
-1. `DeckStatsLogger` is registered as an observer on a deck via `deck.addObserver(statsLogger)`
-2. When `Deck.addCard()` or `Deck.removeCard()` is called, they trigger `notifyObservers()`
-3. `notifyObservers()` computes the current `DeckStats` and calls `onDeckStatsChanged(this, stats)` on each registered observer
-4. The `LearnCardUseCase` also calls `deck.notifyObservers()` after recording a review
-5. `DeckStatsLogger` logs the updated stats to the console
-6. Additional observers (e.g., a persistence observer, a UI updater) can be added without modifying the `Deck` class
+1. `DeckStatsLogger` wird als Observer registriert via `deck.addObserver(statsLogger)`
+2. Bei `Deck.addCard()` oder `Deck.removeCard()` wird `notifyObservers()` ausgelöst
+3. `notifyObservers()` berechnet aktuelle `DeckStats` und ruft `onDeckStatsChanged(this, stats)` auf jedem registrierten Observer auf
+4. `LearnCardUseCase` ruft ebenfalls `deck.notifyObservers()` nach einem Review auf
+5. `DeckStatsLogger` loggt die aktualisierten Statistiken auf der Konsole
+6. Weitere Observer (z.B. Persistenz-Observer, UI-Updater) können ohne Änderung der Deck-Klasse hinzugefügt werden
