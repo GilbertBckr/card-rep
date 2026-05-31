@@ -278,6 +278,148 @@ classDiagram
 
 ## Kapitel 3: SOLID
 
+### Analyse Single-Responsibility-Principle (SRP)
+
+#### Positiv-Beispiel: CreateCardUseCase
+
+```mermaid
+classDiagram
+    class CreateCardUseCase {
+        -CardRepository cardRepository
+        -DeckRepository deckRepository
+        +execute(deckId, front, back) Card
+    }
+```
+
+**Aufgabe:** `CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) hat genau eine Verantwortlichkeit: das Erstellen einer neuen Karte und deren Hinzufügen zu einem Deck. Es validiert die Deck-Existenz, erstellt die Karte, speichert sie und fügt sie dem Deck hinzu. Wenn sich die Karten-Erstellungslogik ändert, muss nur diese Klasse angepasst werden.
+
+#### Negativ-Beispiel: DeckMenu
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -Scanner scanner
+        -CreateDeckUseCase createDeckUseCase
+        -ModifyDeckUseCase modifyDeckUseCase
+        -DeleteDeckUseCase deleteDeckUseCase
+        -CollectionRepository collectionRepository
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -DeckStatsObserver statsObserver
+        -MenuHelper menuHelper
+        +run() void
+        -createDeck() void
+        -modifyDeck() void
+        -deleteDeck() void
+        -viewDeckStats() void
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+```
+
+**Aufgaben:** `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java`) hat mehrere Verantwortlichkeiten:
+1. CRUD-Operationen für Decks
+2. Algorithmus-Auswahl
+3. Statistik-Anzeige
+4. User-Input-Parsing
+
+Es hat vier Gründe sich zu ändern: (1) Deck-Operationen ändern sich, (2) Algorithmus-Auswahl ändert sich, (3) Statistik-Anzeige ändert sich, (4) Input-Handling ändert sich.
+
+**Möglicher Lösungsweg:**
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -DeckMenuActions actions
+        -AlgorithmSelector algorithmSelector
+        +run() void
+    }
+    class DeckMenuActions {
+        +createDeck() void
+        +modifyDeck() void
+        +deleteDeck() void
+    }
+    class AlgorithmSelector {
+        -List~RepetitionAlgorithm~ algorithms
+        +selectAlgorithm() RepetitionAlgorithm
+    }
+    DeckMenu --> DeckMenuActions
+    DeckMenu --> AlgorithmSelector
+```
+
+### Analyse Open-Closed-Principle (OCP)
+
+#### Positiv-Beispiel: RepetitionAlgorithm
+
+```mermaid
+classDiagram
+    class RepetitionAlgorithm {
+        <<interface>>
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class RandomRepetitionAlgorithm {
+        -Random random
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    class SpacedRepetitionAlgorithm {
+        +selectNextCard(cards) Card
+        -calculatePriority(card) int
+        +getName() String
+    }
+    class LeitnerAlgorithm {
+        +selectNextCard(cards) Card
+        +getName() String
+    }
+    RepetitionAlgorithm <|.. RandomRepetitionAlgorithm
+    RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
+    RepetitionAlgorithm <|.. LeitnerAlgorithm : new algorithm
+```
+
+**Analyse:** Das `RepetitionAlgorithm`-Interface (`src/main/java/com/cardrep/domain/service/RepetitionAlgorithm.java`) ist offen für Erweiterung: Neue Algorithmen (z.B. `LeitnerAlgorithm`) können durch Implementierung des Interfaces hinzugefügt werden, ohne bestehenden Code zu modifizieren. Die existierenden Klassen `RandomRepetitionAlgorithm` und `SpacedRepetitionAlgorithm` bleiben unverändert. Das ist hier sinnvoll, weil verschiedene Lernstrategien ein natürlicher Erweiterungspunkt sind.
+
+#### Negativ-Beispiel: DeckMenu.selectAlgorithm()
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -RandomRepetitionAlgorithm randomAlgorithm
+        -SpacedRepetitionAlgorithm spacedAlgorithm
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+    note for DeckMenu "selectAlgorithm() uses hardcoded switch. Adding new algorithm requires modification."
+```
+
+**Analyse:** Die Methode `selectAlgorithm()` in `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:183-198`) verwendet ein hardcodiertes Switch-Statement:
+
+```java
+return switch (choice) {
+    case "1" -> spacedAlgorithm;
+    case "2" -> randomAlgorithm;
+    default -> spacedAlgorithm;
+};
+```
+
+Das Hinzufügen eines neuen Algorithmus erfordert eine Modifikation dieser Methode: OCP verletzt.
+
+**Möglicher Lösungsweg:**
+
+```mermaid
+classDiagram
+    class DeckMenu {
+        -List~RepetitionAlgorithm~ algorithms
+        -selectAlgorithm() RepetitionAlgorithm
+    }
+    class RepetitionAlgorithm {
+        <<interface>>
+        +getName() String
+    }
+    DeckMenu --> RepetitionAlgorithm : iterates over
+    note for DeckMenu "selectAlgorithm() dynamically builds menu from algorithms.getName(). OCP fulfilled."
+```
+
+Lösung: Eine `List<RepetitionAlgorithm>` injizieren und das Menü dynamisch aufbauen. Neue Algorithmen werden einfach zur Liste hinzugefügt.
+
 ### Analyse Dependency-Inversion-Principle (DIP)
 
 #### Positiv-Beispiel: DeleteDeckUseCase
