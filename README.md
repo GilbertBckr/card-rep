@@ -278,148 +278,6 @@ classDiagram
 
 ## Kapitel 3: SOLID
 
-### Analyse Single-Responsibility-Principle (SRP)
-
-#### Positiv-Beispiel: CreateCardUseCase
-
-```mermaid
-classDiagram
-    class CreateCardUseCase {
-        -CardRepository cardRepository
-        -DeckRepository deckRepository
-        +execute(deckId, front, back) Card
-    }
-```
-
-**Aufgabe:** `CreateCardUseCase` (`src/main/java/com/cardrep/application/card/CreateCardUseCase.java`) hat genau eine Verantwortlichkeit: das Erstellen einer neuen Karte und deren Hinzufügen zu einem Deck. Es validiert die Deck-Existenz, erstellt die Karte, speichert sie und fügt sie dem Deck hinzu. Wenn sich die Karten-Erstellungslogik ändert, muss nur diese Klasse angepasst werden.
-
-#### Negativ-Beispiel: DeckMenu
-
-```mermaid
-classDiagram
-    class DeckMenu {
-        -Scanner scanner
-        -CreateDeckUseCase createDeckUseCase
-        -ModifyDeckUseCase modifyDeckUseCase
-        -DeleteDeckUseCase deleteDeckUseCase
-        -CollectionRepository collectionRepository
-        -RandomRepetitionAlgorithm randomAlgorithm
-        -SpacedRepetitionAlgorithm spacedAlgorithm
-        -DeckStatsObserver statsObserver
-        -MenuHelper menuHelper
-        +run() void
-        -createDeck() void
-        -modifyDeck() void
-        -deleteDeck() void
-        -viewDeckStats() void
-        -selectAlgorithm() RepetitionAlgorithm
-    }
-```
-
-**Aufgaben:** `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java`) hat mehrere Verantwortlichkeiten:
-1. CRUD-Operationen für Decks
-2. Algorithmus-Auswahl
-3. Statistik-Anzeige
-4. User-Input-Parsing
-
-Es hat vier Gründe sich zu ändern: (1) Deck-Operationen ändern sich, (2) Algorithmus-Auswahl ändert sich, (3) Statistik-Anzeige ändert sich, (4) Input-Handling ändert sich.
-
-**Möglicher Lösungsweg:**
-
-```mermaid
-classDiagram
-    class DeckMenu {
-        -DeckMenuActions actions
-        -AlgorithmSelector algorithmSelector
-        +run() void
-    }
-    class DeckMenuActions {
-        +createDeck() void
-        +modifyDeck() void
-        +deleteDeck() void
-    }
-    class AlgorithmSelector {
-        -List~RepetitionAlgorithm~ algorithms
-        +selectAlgorithm() RepetitionAlgorithm
-    }
-    DeckMenu --> DeckMenuActions
-    DeckMenu --> AlgorithmSelector
-```
-
-### Analyse Open-Closed-Principle (OCP)
-
-#### Positiv-Beispiel: RepetitionAlgorithm
-
-```mermaid
-classDiagram
-    class RepetitionAlgorithm {
-        <<interface>>
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    class RandomRepetitionAlgorithm {
-        -Random random
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    class SpacedRepetitionAlgorithm {
-        +selectNextCard(cards) Card
-        -calculatePriority(card) int
-        +getName() String
-    }
-    class LeitnerAlgorithm {
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    RepetitionAlgorithm <|.. RandomRepetitionAlgorithm
-    RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
-    RepetitionAlgorithm <|.. LeitnerAlgorithm : new algorithm
-```
-
-**Analyse:** Das `RepetitionAlgorithm`-Interface (`src/main/java/com/cardrep/domain/service/RepetitionAlgorithm.java`) ist offen für Erweiterung: Neue Algorithmen (z.B. `LeitnerAlgorithm`) können durch Implementierung des Interfaces hinzugefügt werden, ohne bestehenden Code zu modifizieren. Die existierenden Klassen `RandomRepetitionAlgorithm` und `SpacedRepetitionAlgorithm` bleiben unverändert. Das ist hier sinnvoll, weil verschiedene Lernstrategien ein natürlicher Erweiterungspunkt sind.
-
-#### Negativ-Beispiel: DeckMenu.selectAlgorithm()
-
-```mermaid
-classDiagram
-    class DeckMenu {
-        -RandomRepetitionAlgorithm randomAlgorithm
-        -SpacedRepetitionAlgorithm spacedAlgorithm
-        -selectAlgorithm() RepetitionAlgorithm
-    }
-    note for DeckMenu "selectAlgorithm() uses hardcoded switch. Adding new algorithm requires modification."
-```
-
-**Analyse:** Die Methode `selectAlgorithm()` in `DeckMenu` (`src/main/java/com/cardrep/adapter/cli/DeckMenu.java:195-210`) verwendet ein hardcodiertes Switch-Statement:
-
-```java
-return switch (choice) {
-    case "1" -> spacedAlgorithm;
-    case "2" -> randomAlgorithm;
-    default -> spacedAlgorithm;
-};
-```
-
-Das Hinzufügen eines neuen Algorithmus erfordert eine Modifikation dieser Methode: OCP verletzt.
-
-**Möglicher Lösungsweg:**
-
-```mermaid
-classDiagram
-    class DeckMenu {
-        -List~RepetitionAlgorithm~ algorithms
-        -selectAlgorithm() RepetitionAlgorithm
-    }
-    class RepetitionAlgorithm {
-        <<interface>>
-        +getName() String
-    }
-    DeckMenu --> RepetitionAlgorithm : iterates over
-    note for DeckMenu "selectAlgorithm() dynamically builds menu from algorithms.getName(). OCP fulfilled."
-```
-
-Lösung: Eine `List<RepetitionAlgorithm>` injizieren und das Menü dynamisch aufbauen. Neue Algorithmen werden einfach zur Liste hinzugefügt.
-
 ### Analyse Dependency-Inversion-Principle (DIP)
 
 #### Positiv-Beispiel: DeleteDeckUseCase
@@ -486,88 +344,6 @@ private final SpacedRepetitionAlgorithm spacedAlgorithm;
 ```
 
 Eine DIP-konforme Lösung wäre: `private final List<RepetitionAlgorithm> algorithms;`: dann hängt `DeckMenu` nur von der Abstraktion `RepetitionAlgorithm` ab.
-
-### Analyse Liskov-Substitution-Principle (LSP)
-
-#### Positiv-Beispiel: RepetitionAlgorithm-Implementierungen
-
-```mermaid
-classDiagram
-    class RepetitionAlgorithm {
-        <<interface>>
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    class RandomRepetitionAlgorithm {
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    class SpacedRepetitionAlgorithm {
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    RepetitionAlgorithm <|.. RandomRepetitionAlgorithm
-    RepetitionAlgorithm <|.. SpacedRepetitionAlgorithm
-```
-
-**Analyse:** Beide Implementierungen von `RepetitionAlgorithm` (`RandomRepetitionAlgorithm`, `SpacedRepetitionAlgorithm`) sind vollständig substituierbar: `Deck.getNextCard()` funktioniert korrekt unabhängig davon, welche Implementierung injiziert wird. Keine Implementierung wirft unerwartete Exceptions oder verändert die Semantik des Interfaces. Client-Code (z.B. `NextCardUseCase`) kann jede Implementierung verwenden, ohne sein Verhalten anzupassen.
-
-#### Negativ-Beispiel: RootCollection extends Collection
-
-```mermaid
-classDiagram
-    class Collection {
-        -String name
-        +setName(name) void
-        +addChildCollection(child) void
-    }
-    class RootCollection {
-        +setName(name) void
-    }
-    Collection <|-- RootCollection
-    note for RootCollection "setName() throws UnsupportedOperationException. Violates LSP: callers of Collection.setName() cannot safely substitute RootCollection."
-```
-
-**Analyse:** `RootCollection` (`src/main/java/com/cardrep/domain/model/RootCollection.java`) erbt von `Collection` und überschreibt `setName()` mit einer `UnsupportedOperationException`. Das verletzt LSP: Code der eine `Collection`-Referenz hält und `setName()` aufruft, erwartet eine erfolgreiche Umbenennung. Mit einer `RootCollection`-Instanz schlägt dieser Aufruf unerwartet fehl. Der Vertrag der Elternklasse (setName akzeptiert valide Namen) wird gebrochen.
-
-**Möglicher Lösungsweg:** Eine `RenamableCollection`-Abstraktion einführen oder `setName()` aus der Basisklasse entfernen und nur in einer spezialisierten Subklasse anbieten. Alternativ: Composition statt Inheritance verwenden.
-
-### Analyse Interface-Segregation-Principle (ISP)
-
-#### Positiv-Beispiel: DeckStatsObserver und RepetitionAlgorithm
-
-```mermaid
-classDiagram
-    class DeckStatsObserver {
-        <<interface>>
-        +onDeckStatsChanged(deck, stats) void
-    }
-    class RepetitionAlgorithm {
-        <<interface>>
-        +selectNextCard(cards) Card
-        +getName() String
-    }
-    note for DeckStatsObserver "1 Methode: Clients müssen nur implementieren was sie brauchen"
-    note for RepetitionAlgorithm "2 Methoden: beide logisch zusammengehörig"
-```
-
-**Analyse:** `DeckStatsObserver` (`src/main/java/com/cardrep/domain/model/DeckStatsObserver.java`) hat genau eine Methode: `onDeckStatsChanged()`. Implementierende Klassen werden nicht gezwungen, Methoden zu implementieren die sie nicht brauchen. Ebenso hat `RepetitionAlgorithm` nur zwei eng zusammengehörige Methoden (`selectNextCard` und `getName`). Beide Interfaces sind schlank und fokussiert: das ISP ist eingehalten.
-
-#### Negativ-Beispiel: CollectionRepository
-
-```mermaid
-classDiagram
-    class CollectionRepository {
-        <<interface>>
-        +save(collection) Collection
-        +findById(id) Optional~Collection~
-        +deleteById(id) void
-        +getRootCollection() Collection
-    }
-    note for CollectionRepository "getRootCollection() ist eine Query-Methode die nicht alle Clients brauchen. Read-Only-Clients müssen trotzdem das gesamte Interface kennen."
-```
-
-**Analyse:** `CollectionRepository` (`src/main/java/com/cardrep/domain/repository/CollectionRepository.java`) kombiniert CRUD-Operationen (`save`, `deleteById`) mit einer speziellen Query-Methode (`getRootCollection`). Use Cases wie `DeleteCollectionUseCase` brauchen nur `findById` und `deleteById`, müssen aber das gesamte Interface kennen inkl. `getRootCollection()`. Das Interface könnte in ein `CollectionReader` (Lese-Operationen) und `CollectionWriter` (Schreib-Operationen) aufgeteilt werden. Hier ist die Verletzung mild, da das Interface insgesamt nur 4 Methoden hat: eine Aufteilung wäre möglich, aber der Nutzen im aktuellen Projektumfang gering.
 
 ---
 
@@ -768,24 +544,6 @@ public <T> String selectFromList(List<T> items, String header,
 
 Alle Tests laufen automatisch via `mvn test` ohne manuelle Intervention. JUnit 5 entdeckt und führt alle Tests aus. JaCoCo generiert Coverage-Reports automatisch. Keine manuellen Schritte, keine UI-Interaktion, keine Datenbank-Setup erforderlich: die In-Memory-Repositories starten leer und brauchen keine Konfiguration.
 
-### ATRIP: Repeatable
-
-Jeder Test liefert bei jedem Lauf dasselbe Ergebnis, unabhängig von Umgebung oder Zeitpunkt. Dies wird erreicht durch:
-
-- **In-Memory-Repositories:** Kein externer Zustand (Datenbank, Dateisystem). Jeder Test startet mit einem frischen, leeren Repository via `@BeforeEach`.
-- **Deterministische Algorithmen im Test:** `RandomRepetitionAlgorithm` akzeptiert ein `Random`-Objekt mit festem Seed, sodass auch randomisierte Logik reproduzierbar getestet werden kann.
-- **Keine Zeitabhängigkeit in Assertions:** Tests prüfen strukturelle Eigenschaften (z.B. "Karte wurde hinzugefügt") statt zeitabhängiger Werte.
-- **Keine Netzwerk- oder I/O-Abhängigkeiten:** Alle Tests laufen vollständig in-process ohne externe Dienste.
-
-### ATRIP: Independent
-
-Jeder Test ist unabhängig von anderen Tests und kann in beliebiger Reihenfolge ausgeführt werden:
-
-- **Eigenes `@BeforeEach`-Setup:** Jede Testklasse erstellt in `setUp()` frische Instanzen aller benötigten Objekte. Kein Test erbt Zustand von einem vorherigen Test.
-- **Keine gemeinsamen statischen Felder:** Alle Test-Fixtures sind Instanzvariablen, keine `static`-Felder.
-- **Frische Mocks pro Test:** Mockito's `@ExtendWith(MockitoExtension.class)` erstellt für jeden Test neue Mock-Instanzen. Verifizierungen eines Tests beeinflussen andere nicht.
-- **Keine festgelegte Ausführungsreihenfolge:** Kein `@Order` oder `@TestMethodOrder` verwendet. JUnit 5 kann Tests in beliebiger Reihenfolge ausführen.
-
 ### ATRIP: Thorough
 
 **Positiv-Beispiel:** `DeckTest` (13 Tests)
@@ -843,7 +601,7 @@ void createCard_shouldSaveCardAndAddToDeck() {
 }
 ```
 
-**Analyse:** Professionell: sprechende Methodennamen (`methodName_condition_expectedResult`), klares Arrange-Act-Assert-Muster, gezielte Verifizierung der Interaktionen, eigene `@BeforeEach`-Setup pro Test.
+**Analyse:** Professionell: sprechende Methodennamen (`action_expectedBehavior`-Muster), klares Arrange-Act-Assert-Muster, gezielte Verifizierung der Interaktionen, eigene `@BeforeEach`-Setup pro Test.
 
 **Negativ-Beispiel:** `RepetitionAlgorithmTest`
 
